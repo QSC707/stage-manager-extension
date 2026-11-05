@@ -1894,44 +1894,63 @@ function scheduleMinimapSliderUpdate() {
 }
 
 /**
- * Synchronize Minimap Viewport Slider position and height with corridor scroll
+ * Synchronize Minimap Viewport Slider position and height strictly with corridor scroll & thumbnail track
  */
 function updateMinimapSlider() {
-  if (!minimapEnabled || smMinimap.classList.contains('is-hidden') || !minimapScrollContainer || !minimapSlider) return;
+  if (!minimapEnabled || smMinimap.classList.contains('is-hidden') || !minimapScrollContainer || !minimapSlider || !minimapTrack) return;
 
   const corridorScrollTop = stageCorridor.scrollTop;
   const corridorScrollHeight = stageCorridor.scrollHeight;
   const corridorClientHeight = stageCorridor.clientHeight;
   const containerHeight = minimapScrollContainer.clientHeight;
-  const trackHeight = minimapTrack.scrollHeight;
+  const trackHeight = minimapTrack.offsetHeight;
+  const trackPaddingTop = 6;
+  const availableHeight = containerHeight - trackPaddingTop * 2;
 
-  if (corridorScrollHeight <= corridorClientHeight || containerHeight <= 0) {
+  // If there are no mini cards or container has zero height
+  if (minimapTrack.children.length === 0 || containerHeight <= 0 || trackHeight <= 0) {
     minimapSlider.style.display = 'none';
+    minimapTrack.style.transform = 'translateY(0px)';
+    return;
+  }
+
+  // If the entire corridor is visible and thumbnails fit within available space
+  if (corridorScrollHeight <= corridorClientHeight && trackHeight <= availableHeight) {
+    minimapSlider.style.display = 'block';
+    minimapSlider.style.height = `${trackHeight}px`;
+    minimapSlider.style.transform = `translateY(${trackPaddingTop}px)`;
     minimapTrack.style.transform = 'translateY(0px)';
     return;
   }
 
   minimapSlider.style.display = 'block';
 
-  const maxCorridorScroll = corridorScrollHeight - corridorClientHeight;
+  const maxCorridorScroll = Math.max(1, corridorScrollHeight - corridorClientHeight);
   const scrollProgress = Math.min(1, Math.max(0, corridorScrollTop / maxCorridorScroll));
+  const visibleRatio = Math.min(1, corridorClientHeight / corridorScrollHeight);
 
-  // Slider height reflects visible portion of the corridor
-  const visibleRatio = corridorClientHeight / corridorScrollHeight;
-  const sliderHeight = Math.max(26, Math.min(containerHeight, Math.round(containerHeight * visibleRatio)));
-  const maxSliderTravel = containerHeight - sliderHeight;
-  const sliderTop = Math.round(scrollProgress * maxSliderTravel);
+  if (trackHeight <= availableHeight) {
+    // Case A: Thumbnails fit inside container without track scrolling
+    // Slider height and travel are strictly bounded to the thumbnails height!
+    const sliderHeight = Math.max(18, Math.min(trackHeight, Math.round(trackHeight * visibleRatio)));
+    const maxSliderTravel = trackHeight - sliderHeight;
+    const sliderTop = trackPaddingTop + Math.round(scrollProgress * maxSliderTravel);
 
-  minimapSlider.style.height = `${sliderHeight}px`;
-  minimapSlider.style.transform = `translateY(${sliderTop}px)`;
-
-  // If mini cards track is taller than container, scroll track in sync
-  if (trackHeight > containerHeight) {
-    const maxTrackScroll = trackHeight - containerHeight;
-    const trackOffset = Math.round(scrollProgress * maxTrackScroll);
-    minimapTrack.style.transform = `translateY(-${trackOffset}px)`;
-  } else {
+    minimapSlider.style.height = `${sliderHeight}px`;
+    minimapSlider.style.transform = `translateY(${sliderTop}px)`;
     minimapTrack.style.transform = 'translateY(0px)';
+  } else {
+    // Case B: Thumbnails exceed available space, track must translate in sync
+    const sliderHeight = Math.max(22, Math.min(availableHeight, Math.round(availableHeight * visibleRatio)));
+    const maxSliderTravel = availableHeight - sliderHeight;
+    const sliderTop = trackPaddingTop + Math.round(scrollProgress * maxSliderTravel);
+
+    const maxTrackScroll = trackHeight - availableHeight;
+    const trackOffset = Math.round(scrollProgress * maxTrackScroll);
+
+    minimapSlider.style.height = `${sliderHeight}px`;
+    minimapSlider.style.transform = `translateY(${sliderTop}px)`;
+    minimapTrack.style.transform = `translateY(-${trackOffset}px)`;
   }
 }
 
@@ -2026,11 +2045,19 @@ function setupMinimapInteractions() {
     dragStartY = e.clientY;
     dragStartScrollTop = stageCorridor.scrollTop;
 
-    // Cache metrics once at drag start (eliminating synchronous reflows in pointermove!)
-    dragContainerHeight = minimapScrollContainer.clientHeight;
+    // Cache metrics strictly aligned to mini cards thumbnails
+    const containerHeight = minimapScrollContainer.clientHeight;
+    const trackPaddingTop = 6;
+    const availableHeight = containerHeight - trackPaddingTop * 2;
+    const trackHeight = minimapTrack.offsetHeight;
     dragSliderHeight = minimapSlider.offsetHeight;
-    dragMaxSliderTravel = dragContainerHeight - dragSliderHeight;
-    dragMaxCorridorScroll = stageCorridor.scrollHeight - stageCorridor.clientHeight;
+
+    if (trackHeight <= availableHeight) {
+      dragMaxSliderTravel = Math.max(1, trackHeight - dragSliderHeight);
+    } else {
+      dragMaxSliderTravel = Math.max(1, availableHeight - dragSliderHeight);
+    }
+    dragMaxCorridorScroll = Math.max(1, stageCorridor.scrollHeight - stageCorridor.clientHeight);
 
     document.body.classList.add('is-minimap-dragging');
     minimapSlider.classList.add('is-dragging');
@@ -2061,18 +2088,36 @@ function setupMinimapInteractions() {
   minimapSlider.addEventListener('pointerup', stopDragging);
   minimapSlider.addEventListener('pointercancel', stopDragging);
 
-  // Click on Track Area to Jump/Scroll directly
+  // Click on Track Area to Jump/Scroll directly (Strictly aligned with thumbnail area)
   minimapScrollContainer.addEventListener('click', (e) => {
     if (e.target.closest('.sm-mini-card') || e.target === minimapSlider) return;
     const rect = minimapScrollContainer.getBoundingClientRect();
     const clickY = e.clientY - rect.top;
-    const containerHeight = minimapScrollContainer.clientHeight;
-    const sliderHeight = minimapSlider.offsetHeight || 30;
-    const maxSliderTravel = containerHeight - sliderHeight;
-    const maxCorridorScroll = stageCorridor.scrollHeight - stageCorridor.clientHeight;
 
+    const containerHeight = minimapScrollContainer.clientHeight;
+    const trackPaddingTop = 6;
+    const availableHeight = containerHeight - trackPaddingTop * 2;
+    const trackHeight = minimapTrack.offsetHeight;
+    const sliderHeight = minimapSlider.offsetHeight || 24;
+
+    let maxSliderTravel = 0;
+    if (trackHeight <= availableHeight) {
+      if (clickY < trackPaddingTop) {
+        stageCorridor.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (clickY > trackPaddingTop + trackHeight) {
+        stageCorridor.scrollTo({ top: stageCorridor.scrollHeight, behavior: 'smooth' });
+        return;
+      }
+      maxSliderTravel = Math.max(1, trackHeight - sliderHeight);
+    } else {
+      maxSliderTravel = Math.max(1, availableHeight - sliderHeight);
+    }
+
+    const maxCorridorScroll = stageCorridor.scrollHeight - stageCorridor.clientHeight;
     if (maxSliderTravel > 0 && maxCorridorScroll > 0) {
-      const targetSliderTop = Math.max(0, Math.min(maxSliderTravel, clickY - sliderHeight / 2));
+      const targetSliderTop = Math.max(0, Math.min(maxSliderTravel, clickY - trackPaddingTop - sliderHeight / 2));
       const progress = targetSliderTop / maxSliderTravel;
       stageCorridor.scrollTo({
         top: progress * maxCorridorScroll,

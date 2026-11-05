@@ -16,9 +16,9 @@
   --accent-color: #007aff;
   --accent-glow: rgba(0, 122, 255, 0.28);
   --danger-color: #ff453a;
-  --radius-lg: 14px;
-  --radius-md: 10px;
-  --radius-sm: 6px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
   --card-aspect: 16 / 9;
   --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -746,12 +746,13 @@ body {
 
 .sm-active-close {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-muted);
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  font-size: 14px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -761,9 +762,19 @@ body {
   line-height: 1;
 }
 
+.sm-stage-group.is-active-bar:hover .sm-active-close {
+  background: #ff5f56;
+  border-color: rgba(0, 0, 0, 0.25);
+  color: #4a0002;
+  box-shadow: 0 1px 3px rgba(255, 95, 86, 0.35);
+}
+
 .sm-active-close:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: #ff3b30 !important;
+  color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.55);
+  transform: scale(1.15);
 }
 
 /* ================= Inactive Stage Card (Neutral Forward-Facing, No Skew) ================= */
@@ -895,22 +906,25 @@ body {
   opacity: 1;
 }
 
-/* Close Button (×) */
+/* Close Button (×) - Mac Style Traffic Light Red */
 .sm-card-close {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: #ff5f56;
+  color: #4a0002;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 11px;
+  font-weight: 700;
   line-height: 1;
+  box-shadow: 0 1px 3px rgba(255, 95, 86, 0.35);
   transition: all 0.15s ease;
   opacity: 0;
+  flex-shrink: 0;
 }
 
 .sm-stage-group:hover .sm-card-close,
@@ -919,12 +933,18 @@ body {
 }
 
 .sm-card-close:hover {
-  background: var(--danger-color);
+  background: #ff3b30;
   color: #ffffff;
-  transform: scale(1.1);
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.55);
+  transform: scale(1.15);
 }
 
-/* ================= Card Preview Body ================= */
+.sm-card-close:active {
+  transform: scale(0.94);
+}
+
+/* ================= Card Preview Body (Mac 27" Squircle Window) ================= */
 .sm-card-preview {
   position: relative;
   width: 100%;
@@ -934,9 +954,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
 }
 
 .sm-card-preview img {
@@ -946,7 +967,12 @@ body {
   object-position: top left;
   display: block;
   image-rendering: -webkit-optimize-contrast;
-  border-radius: var(--radius-md);
+  border-radius: 15px;
+}
+
+.sm-stage-group:hover .sm-card-preview {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
 }
 
 /* Fallback card placeholder when no screenshot exists yet */
@@ -1140,8 +1166,8 @@ body.is-minimap-dragging {
 /* Micro Card in Minimap */
 .sm-mini-card {
   width: 44px;
-  height: 27px;
-  border-radius: 4px;
+  height: 26px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--bg-card);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -1275,13 +1301,9 @@ body.is-minimap-dragging {
   will-change: transform;
   background: rgba(255, 255, 255, 0.12);
   border: 1.5px solid rgba(255, 255, 255, 0.32);
-  border-radius: 5px;
+  border-radius: 7px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   cursor: grab;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
-  pointer-events: auto;
-  z-index: 5;
-}
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
   pointer-events: auto;
   z-index: 5;

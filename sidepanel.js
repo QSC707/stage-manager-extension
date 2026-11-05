@@ -298,16 +298,17 @@ function renderPinnedGrid(pinnedTabs) {
  */
 function createPinnedCard(tab) {
   const card = document.createElement('div');
-  card.className = `sm-pinned-card${tab.id === activeTabId ? ' is-active' : ''}${tab.discarded ? ' is-discarded' : ''}`;
+  const isActive = tab.id === activeTabId;
+  card.className = `sm-pinned-card${isActive ? ' is-active' : ''}${tab.discarded ? ' is-discarded' : ''}`;
   card.dataset.tabId = tab.id;
   card.title = tab.title || '固定标签页';
 
-  // Card Preview Area
+  // Card Preview Area (for inactive thumbnail)
   const preview = document.createElement('div');
   preview.className = 'sm-pinned-preview';
   card.appendChild(preview);
 
-  // Footer Overlay with Favicon and Title
+  // Footer Overlay with Favicon and Title (for inactive thumbnail)
   const footer = document.createElement('div');
   footer.className = 'sm-pinned-footer';
 
@@ -323,6 +324,16 @@ function createPinnedCard(tab) {
   footer.appendChild(fav);
   footer.appendChild(name);
   card.appendChild(footer);
+
+  // Active state icon view (Requirement: "当固定的标签页被激活后，显示图标就行了，不然激活的固定标签会一直刷新缩略图")
+  const activeContent = document.createElement('div');
+  activeContent.className = 'sm-pinned-active-content';
+  const activeFav = document.createElement('img');
+  activeFav.className = 'sm-pinned-active-fav';
+  activeFav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
+  activeFav.onerror = () => { activeFav.src = getFallbackFavicon(tab.url); };
+  activeContent.appendChild(activeFav);
+  card.appendChild(activeContent);
 
   // Click to activate
   card.onclick = (e) => {
@@ -345,7 +356,10 @@ function createPinnedCard(tab) {
   // Right-click context menu
   card.oncontextmenu = (e) => showContextMenu(e, tab);
 
-  updatePinnedCardPreview(card, tab);
+  // If inactive, load thumbnail preview; if active, only show icon (no thumbnail)
+  if (!isActive) {
+    updatePinnedCardPreview(card, tab);
+  }
   return card;
 }
 
@@ -356,7 +370,8 @@ function createPinnedCard(tab) {
  */
 function updatePinnedCard(cardEl, tab) {
   cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
-  if (tab.id === activeTabId) {
+  const isActive = tab.id === activeTabId;
+  if (isActive) {
     cardEl.classList.add('is-active');
   } else {
     cardEl.classList.remove('is-active');
@@ -370,13 +385,31 @@ function updatePinnedCard(cardEl, tab) {
 
   cardEl.title = tab.title || '固定标签页';
 
+  // Update active icon view
+  let activeFav = cardEl.querySelector('.sm-pinned-active-fav');
+  const expectedFav = tab.favIconUrl || getFallbackFavicon(tab.url);
+  if (!activeFav) {
+    let activeContent = cardEl.querySelector('.sm-pinned-active-content');
+    if (!activeContent) {
+      activeContent = document.createElement('div');
+      activeContent.className = 'sm-pinned-active-content';
+      cardEl.appendChild(activeContent);
+    }
+    activeFav = document.createElement('img');
+    activeFav.className = 'sm-pinned-active-fav';
+    activeFav.onerror = () => { activeFav.src = getFallbackFavicon(tab.url); };
+    activeContent.appendChild(activeFav);
+  }
+  if (activeFav.src !== expectedFav) {
+    activeFav.src = expectedFav;
+  }
+
   const nameEl = cardEl.querySelector('.sm-pinned-name');
   if (nameEl && nameEl.textContent !== (tab.title || '新标签页')) {
     nameEl.textContent = tab.title || '新标签页';
   }
 
   const favEl = cardEl.querySelector('.sm-pinned-fav');
-  const expectedFav = tab.favIconUrl || getFallbackFavicon(tab.url);
   if (favEl && favEl.src !== expectedFav) {
     favEl.src = expectedFav;
   }
@@ -384,7 +417,11 @@ function updatePinnedCard(cardEl, tab) {
   // Update audio indicator
   updatePinnedCardAudio(cardEl, tab);
 
-  updatePinnedCardPreview(cardEl, tab);
+  // Requirement: "当固定的标签页被激活后，显示图标就行了，不然激活的固定标签会一直刷新缩略图"
+  // If active, do NOT touch or render thumbnail preview!
+  if (!isActive) {
+    updatePinnedCardPreview(cardEl, tab);
+  }
 }
 
 /**
@@ -898,17 +935,15 @@ function setupEventListeners() {
       });
 
       // 1. If pinned tab: update pinned card thumbnail
-      // REQUIREMENT: "顶部固定的缩略图，在当前前台的标签页不应该持续刷新的"
+      // REQUIREMENT: "当固定的标签页被激活后，显示图标就行了，不然激活的固定标签会一直刷新缩略图"
       if (currentTab.pinned && pinnedGrid) {
+        // If this tab is the active tab, it only shows the icon - do NOT update or touch thumbnail!
+        if (tabId === activeTabId) {
+          return;
+        }
         const pinnedCardEl = pinnedGrid.querySelector(`[data-tab-id="${tabId}"]`);
         if (pinnedCardEl) {
-          const previewEl = pinnedCardEl.querySelector('.sm-pinned-preview');
-          const alreadyRendered = previewEl && previewEl.dataset.renderedUrl === messageUrl;
-          if (tabId === activeTabId && alreadyRendered) {
-            // Actively viewing foreground tab: do NOT continuously touch or re-flash!
-          } else {
-            updatePinnedCardPreview(pinnedCardEl, currentTab);
-          }
+          updatePinnedCardPreview(pinnedCardEl, currentTab);
         }
       }
 

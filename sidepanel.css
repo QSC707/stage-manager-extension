@@ -3,16 +3,16 @@
    ========================================================= */
 
 :root {
-  --bg-primary: #121316;
-  --bg-glass: rgba(24, 26, 32, 0.78);
-  --bg-card: rgba(32, 35, 44, 0.85);
-  --bg-card-hover: rgba(42, 46, 58, 0.95);
+  --bg-primary: #3C3C3C;
+  --bg-glass: rgba(60, 60, 60, 0.86);
+  --bg-card: rgba(255, 255, 255, 0.08);
+  --bg-card-hover: rgba(255, 255, 255, 0.14);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(0, 122, 255, 0.65);
-  --border-card: rgba(255, 255, 255, 0.12);
+  --border-active: rgba(0, 122, 255, 0.75);
+  --border-card: transparent;
   --text-primary: #f0f2f5;
-  --text-secondary: #9aa0a6;
-  --text-muted: #5f6368;
+  --text-secondary: #c7cbd1;
+  --text-muted: #9aa0a6;
   --accent-color: #007aff;
   --accent-glow: rgba(0, 122, 255, 0.28);
   --danger-color: #ff453a;
@@ -264,8 +264,8 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 4px 8px 24px 10px;
-  perspective: 900px;
+  padding: 8px 14px 24px 14px;
+  perspective: 1000px;
   perspective-origin: left center;
   /* Instant 1:1 scroll responsiveness without frame-fighting animation lag */
   scroll-behavior: auto;
@@ -288,8 +288,8 @@ body {
 .sm-pinned-section {
   flex-shrink: 0;
   margin: 0;
-  padding: 8px 12px 12px;
-  background: rgba(255, 255, 255, 0.025);
+  padding: 8px 14px 12px;
+  background: rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
@@ -377,21 +377,55 @@ body {
 }
 
 .sm-pinned-card.is-active {
+  background: rgba(255, 255, 255, 0.12);
   border: 2px solid var(--accent-color);
-  box-shadow: 0 0 12px var(--accent-glow);
+  box-shadow: 0 0 16px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .sm-pinned-card.is-active::before {
   content: '';
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 5px;
+  right: 5px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background-color: var(--accent-color);
   box-shadow: 0 0 6px var(--accent-color);
   z-index: 4;
+}
+
+/* Requirement: "当固定的标签页被激活后，显示图标就行了，不然激活的固定标签会一直刷新缩略图" */
+.sm-pinned-card.is-active .sm-pinned-preview,
+.sm-pinned-card.is-active .sm-pinned-footer {
+  display: none !important;
+}
+
+.sm-pinned-active-content {
+  display: none;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.sm-pinned-card.is-active .sm-pinned-active-content {
+  display: flex;
+}
+
+.sm-pinned-active-fav {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+  transition: transform 0.2s var(--spring-easing);
+}
+
+.sm-pinned-card.is-active:hover .sm-pinned-active-fav {
+  transform: scale(1.12);
 }
 
 /* Pinned Card Audio Indicator (Playing / Muted) */
@@ -402,7 +436,7 @@ body {
   width: 19px;
   height: 19px;
   border-radius: var(--radius-sm);
-  background: rgba(18, 20, 26, 0.78);
+  background: rgba(45, 45, 45, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -539,7 +573,8 @@ body {
 /* ================= Stage Group (Container for 1 or more tabs) ================= */
 .sm-stage-group {
   position: relative;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+  width: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
   transition: transform 0.35s var(--spring-easing);
@@ -550,7 +585,8 @@ body {
 .sm-stage-group.is-active-bar {
   perspective: none !important;
   transform: none !important;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  width: 100%;
   cursor: pointer;
 }
 
@@ -637,23 +673,25 @@ body {
 
 /* ================= Inactive Stage 3D Perspective Card ================= */
 .sm-stages-list .sm-stage-group {
-  perspective: 800px;
+  perspective: 1000px;
   transform-origin: 15% center;
+  width: 100%;
 }
 
 .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: rotateY(9deg) scale(0.93);
+  transform: rotateY(16deg) rotateX(1deg) scale(0.91);
   transform-origin: left center;
-  transition: transform 0.35s var(--spring-easing), box-shadow 0.35s ease, filter 0.3s ease;
-  filter: brightness(0.92);
+  transition: transform 0.32s var(--spring-easing), box-shadow 0.32s ease, filter 0.25s ease;
+  filter: brightness(0.92) contrast(1.02);
   border-radius: var(--radius-lg);
+  overflow: visible;
 }
 
-/* Hover effect: Fluidly spring back straight, elevate */
+/* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */
 .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: rotateY(0deg) scale(1.02);
-  filter: brightness(1);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  transform: rotateY(0deg) rotateX(0deg) scale(1);
+  filter: brightness(1) contrast(1);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
   z-index: 5;
 }
 
@@ -683,30 +721,32 @@ body {
 }
 
 
-/* ================= The Card Component ================= */
+/* ================= The Card Component (Transparent Floating Window, No Black Border) ================= */
 .sm-card {
   position: relative;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
   transition: all 0.25s var(--spring-easing);
   z-index: 3;
 }
 
 .sm-card:hover {
-  background: var(--bg-card-hover);
+  background: transparent;
 }
 
-/* Card Header (Mac Titlebar style) */
+/* Card Header (Mac Frosted Titlebar style, blends cleanly with window) */
 .sm-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 11.5px;
   gap: 8px;
 }
@@ -791,11 +831,12 @@ body {
   position: relative;
   width: 100%;
   aspect-ratio: var(--card-aspect);
-  background: #18191f;
+  background: transparent;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .sm-card-preview img {
@@ -805,6 +846,8 @@ body {
   object-position: top left;
   display: block;
   image-rendering: -webkit-optimize-contrast;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
 }
 
 /* Fallback card placeholder when no screenshot exists yet */
@@ -878,8 +921,19 @@ body {
 }
 
 .sm-body-wrapper.minimap-left .sm-corridor {
-  padding: 4px 10px 24px 8px;
+  padding: 8px 14px 24px 14px;
   perspective-origin: right center;
+}
+
+.sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group .sm-card-wrapper {
+  transform: rotateY(-16deg) rotateX(1deg) scale(0.91);
+  transform-origin: right center;
+  box-shadow: 8px 12px 28px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
+  transform: rotateY(0deg) rotateX(0deg) scale(1);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
 
 .sm-body-wrapper.minimap-left .sm-minimap-popover {
@@ -1403,7 +1457,7 @@ body.is-minimap-dragging {
   position: fixed;
   z-index: 1000;
   min-width: 136px;
-  background: rgba(28, 30, 38, 0.94);
+  background: rgba(55, 55, 55, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.12);

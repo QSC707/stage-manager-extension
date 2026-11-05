@@ -597,6 +597,9 @@ function createActiveBarCard(tab) {
   bar.appendChild(closeBtn);
   group.appendChild(bar);
 
+  // Audio indicator
+  updateActiveBarAudio(group, tab);
+
   // Click to focus
   group.onclick = (e) => {
     e.stopPropagation();
@@ -645,6 +648,50 @@ function updateActiveBarCard(cardEl, tab) {
   if (favEl && favEl.src !== expectedFav) {
     favEl.src = expectedFav;
   }
+
+  // Update audio indicator
+  updateActiveBarAudio(cardEl, tab);
+}
+
+/**
+ * Update audio playing / muted status indicator for active horizontal bar
+ * @param {HTMLElement} cardEl
+ * @param {object} tab
+ */
+function updateActiveBarAudio(cardEl, tab) {
+  const bar = cardEl.querySelector('.sm-active-bar');
+  if (!bar) return;
+  let audioBtn = bar.querySelector('.sm-active-audio');
+  const isAudible = Boolean(tab.audible);
+  const isMuted = Boolean(tab.mutedInfo && tab.mutedInfo.muted);
+
+  if (isAudible || isMuted) {
+    if (!audioBtn) {
+      audioBtn = document.createElement('div');
+      audioBtn.className = 'sm-active-audio';
+      const closeBtn = bar.querySelector('.sm-active-close');
+      if (closeBtn) {
+        bar.insertBefore(audioBtn, closeBtn);
+      } else {
+        bar.appendChild(audioBtn);
+      }
+    }
+    if (isMuted) {
+      audioBtn.className = 'sm-active-audio is-muted';
+      audioBtn.title = '取消静音 (网页已静音)';
+      audioBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+    } else {
+      audioBtn.className = 'sm-active-audio is-playing';
+      audioBtn.title = '静音当前网页 (正在播放声音)';
+      audioBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+    }
+    audioBtn.onclick = (e) => {
+      e.stopPropagation();
+      chrome.tabs.update(tab.id, { muted: !isMuted });
+    };
+  } else if (audioBtn) {
+    audioBtn.remove();
+  }
 }
 
 /**
@@ -691,8 +738,50 @@ function updateInactiveTabCard(cardEl, tab) {
     badgeEl.remove();
   }
 
+  // Update audio indicator
+  updateInactiveCardAudio(cardEl, tab);
+
   // Update preview image with strict URL validation
   updateInactiveTabPreview(cardEl, tab);
+}
+
+/**
+ * Update audio playing / muted status indicator for inactive card
+ * @param {HTMLElement} cardEl
+ * @param {object} tab
+ */
+function updateInactiveCardAudio(cardEl, tab) {
+  const controls = cardEl.querySelector('.sm-card-controls');
+  if (!controls) return;
+  let audioBtn = controls.querySelector('.sm-card-audio');
+  const isAudible = Boolean(tab.audible);
+  const isMuted = Boolean(tab.mutedInfo && tab.mutedInfo.muted);
+
+  if (isAudible || isMuted) {
+    if (!audioBtn) {
+      audioBtn = document.createElement('div');
+      audioBtn.className = 'sm-card-audio';
+      const closeBtn = controls.querySelector('.sm-card-close');
+      if (closeBtn) {
+        controls.insertBefore(audioBtn, closeBtn);
+      } else {
+        controls.appendChild(audioBtn);
+      }
+    }
+    if (isMuted) {
+      audioBtn.title = '取消静音 (网页已静音)';
+      audioBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+    } else {
+      audioBtn.title = '静音标签 (正在播放声音)';
+      audioBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+    }
+    audioBtn.onclick = (e) => {
+      e.stopPropagation();
+      chrome.tabs.update(tab.id, { muted: !isMuted });
+    };
+  } else if (audioBtn) {
+    audioBtn.remove();
+  }
 }
 
 /**
@@ -759,21 +848,6 @@ function createInactiveTabCard(tab) {
   const controls = document.createElement('div');
   controls.className = 'sm-card-controls';
 
-  // Audio indicator
-  if (tab.audible) {
-    const audioBtn = document.createElement('div');
-    audioBtn.className = 'sm-card-audio';
-    audioBtn.title = tab.mutedInfo?.muted ? '取消静音' : '静音标签';
-    audioBtn.innerHTML = tab.mutedInfo?.muted
-      ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
-      : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
-    audioBtn.onclick = (e) => {
-      e.stopPropagation();
-      chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
-    };
-    controls.appendChild(audioBtn);
-  }
-
   // Close button
   const closeBtn = document.createElement('button');
   closeBtn.className = 'sm-card-close';
@@ -797,6 +871,9 @@ function createInactiveTabCard(tab) {
   card.appendChild(preview);
   cardWrapper.appendChild(card);
   container.appendChild(cardWrapper);
+
+  // Audio indicator
+  updateInactiveCardAudio(card, tab);
 
   // Strictly update preview image
   updateInactiveTabPreview(card, tab);
@@ -1052,6 +1129,15 @@ function setupEventListeners() {
       }
     }, { passive: true });
   }
+
+  // Double-click empty corridor area to quickly open a new tab
+  if (stageCorridor) {
+    stageCorridor.addEventListener('dblclick', (e) => {
+      if (e.target === stageCorridor || e.target === stagesList || e.target === inactiveSectionLabel) {
+        chrome.tabs.create({});
+      }
+    });
+  }
 }
 
 /**
@@ -1248,10 +1334,65 @@ function hideContextMenu() {
 }
 
 /**
+ * Display a non-blocking macOS-style floating toast notification
+ * @param {string} message
+ * @param {number} duration
+ */
+function showToast(message, duration = 2600) {
+  let toast = document.getElementById('sm-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'sm-toast';
+    toast.className = 'sm-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('is-visible');
+  clearTimeout(toast.__timer);
+  toast.__timer = setTimeout(() => {
+    toast.classList.remove('is-visible');
+  }, duration);
+}
+
+/**
  * Setup interactions for Context Menu actions & auto-dismissal
  */
 function setupContextMenuInteractions() {
   if (!tabContextMenu) return;
+
+  // 0. New Tab
+  const newTabBtn = document.getElementById('ctx-new-tab');
+  if (newTabBtn) {
+    newTabBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideContextMenu();
+      chrome.tabs.create({});
+    });
+  }
+
+  // 0.1 Reload Tab
+  const reloadTabBtn = document.getElementById('ctx-reload-tab');
+  if (reloadTabBtn) {
+    reloadTabBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      chrome.tabs.reload(targetTab.id);
+    });
+  }
+
+  // 0.2 Duplicate Tab
+  const duplicateTabBtn = document.getElementById('ctx-duplicate-tab');
+  if (duplicateTabBtn) {
+    duplicateTabBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      chrome.tabs.duplicate(targetTab.id);
+    });
+  }
 
   // 1. Browser Native Split Screen (Single-window side-by-side tab split view)
   const splitBtn = document.getElementById('ctx-split-screen');
@@ -1335,7 +1476,7 @@ function setupContextMenuInteractions() {
 
         // 3. Fallback: If neither API is supported in the current browser runtime
         Logger.warn('SidePanel', '当前浏览器未开放扩展程序直接调用单窗口原生分屏 API (chrome.tabs.createSplit)');
-        alert('当前浏览器环境尚未开放扩展直接调用单窗口原生分屏 API。您可以在标签栏右键选择「将标签页添加到新分屏视图」或使用浏览器分屏快捷键。');
+        showToast('当前浏览器环境尚未开放直接分屏 API，请在标签栏右键分屏');
       } catch (err) {
         Logger.error('SidePanel', '浏览器原生分屏失败:', err);
       }

@@ -99,8 +99,8 @@
     <!-- Empty State -->
     <div class="sm-empty" id="empty-state" style="display: none;">
       <div class="sm-empty-icon">🪟</div>
-      <div class="sm-empty-title">没有找到匹配的标签</div>
-      <div class="sm-empty-desc">尝试换个关键词，或按 Enter 在新标签页打开搜索</div>
+      <div class="sm-empty-title">当前暂无打开的标签页</div>
+      <div class="sm-empty-desc">在浏览器中打开网页，即可在台前调度中一览所有视窗</div>
     </div>
 
     <!-- Diagnostic Logs Drawer (Collapsible) -->
@@ -125,6 +125,16 @@
 
     <!-- Custom Right-Click Context Menu -->
     <div class="sm-context-menu" id="tab-context-menu" style="display: none;">
+      <div class="sm-ctx-item" id="ctx-new-tab">
+        <span class="sm-ctx-text">新建标签页</span>
+      </div>
+      <div class="sm-ctx-item" id="ctx-reload-tab">
+        <span class="sm-ctx-text">重新加载</span>
+      </div>
+      <div class="sm-ctx-item" id="ctx-duplicate-tab">
+        <span class="sm-ctx-text">复制标签页</span>
+      </div>
+      <div class="sm-ctx-separator"></div>
       <div class="sm-ctx-item" id="ctx-split-screen">
         <span class="sm-ctx-icon">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

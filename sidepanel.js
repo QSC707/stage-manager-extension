@@ -28,6 +28,7 @@ const btnCorridorPos = document.getElementById('btn-corridor-pos');
 const txtCorridorPos = document.getElementById('txt-corridor-pos');
 const btnLogsToggle = document.getElementById('btn-logs-toggle');
 const bodyWrapper = document.getElementById('body-wrapper');
+const corridorWrapper = document.getElementById('corridor-wrapper');
 const stageCorridor = document.getElementById('stage-corridor');
 const searchBar = document.getElementById('search-bar');
 const searchInput = document.getElementById('search-input');
@@ -46,9 +47,10 @@ const popoverFavicon = document.getElementById('popover-favicon');
 const popoverTitle = document.getElementById('popover-title');
 const popoverPreview = document.getElementById('popover-preview');
 
-// Minimap State & Drag Cache
+// Minimap & Corridor State
 let minimapEnabled = localStorage.getItem('sm_minimap_enabled') !== 'false';
 let minimapPosition = localStorage.getItem('sm_minimap_position') || 'right';
+let corridorOrientation = localStorage.getItem('sm_corridor_orientation') || 'right';
 let isDraggingSlider = false;
 let dragStartY = 0;
 let dragStartScrollTop = 0;
@@ -1966,7 +1968,8 @@ function updateMinimapSlider() {
 }
 
 /**
- * Apply Minimap Position (Left or Right)
+ * Apply Minimap Rail Position (Left or Right)
+ * Note: Strictly affects ONLY the minimap rail position, NEVER alters corridor thumbnail arrangement!
  * @param {'left'|'right'} pos
  */
 function applyMinimapPosition(pos) {
@@ -1975,21 +1978,10 @@ function applyMinimapPosition(pos) {
   if (bodyWrapper) {
     bodyWrapper.classList.toggle('minimap-left', pos === 'left');
   }
-  if (pinnedStageSection) {
-    pinnedStageSection.classList.toggle('minimap-left', pos === 'left');
-  }
   if (btnMinimapPos) {
     btnMinimapPos.title = pos === 'left'
       ? '目录当前在左侧，点击切换到右侧 (右键亦可切换)'
       : '目录当前在右侧，点击切换到左侧 (右键亦可切换)';
-  }
-  if (btnCorridorPos) {
-    btnCorridorPos.title = pos === 'left'
-      ? '调度长廊当前在右侧，点击切换到左侧'
-      : '调度长廊当前在左侧，点击切换到右侧';
-    if (txtCorridorPos) {
-      txtCorridorPos.textContent = pos === 'left' ? '长廊在右' : '长廊在左';
-    }
   }
   scheduleMinimapSliderUpdate();
 }
@@ -2000,7 +1992,38 @@ function applyMinimapPosition(pos) {
 function toggleMinimapPosition() {
   const nextPos = minimapPosition === 'left' ? 'right' : 'left';
   applyMinimapPosition(nextPos);
-  Logger.info('Minimap', `已切换调度长廊与目录显示位置：长廊${nextPos === 'left' ? '在右' : '在左'}`);
+  Logger.info('Minimap', `已切换目录小地图位置至：${nextPos === 'left' ? '左侧' : '右侧'}`);
+}
+
+/**
+ * Apply Corridor 3D Orientation (Left Tilt or Right Tilt)
+ * Note: Controlled independently by the corridor footer button.
+ * @param {'left'|'right'} orient
+ */
+function applyCorridorOrientation(orient) {
+  corridorOrientation = orient;
+  localStorage.setItem('sm_corridor_orientation', orient);
+  if (corridorWrapper) {
+    corridorWrapper.classList.toggle('orient-left', orient === 'left');
+    corridorWrapper.classList.toggle('orient-right', orient === 'right');
+  }
+  if (txtCorridorPos) {
+    txtCorridorPos.textContent = orient === 'left' ? '长廊向左' : '长廊向右';
+  }
+  if (btnCorridorPos) {
+    btnCorridorPos.title = orient === 'left'
+      ? '调度长廊当前向左倾斜，点击切换向右'
+      : '调度长廊当前向右倾斜，点击切换向左';
+  }
+}
+
+/**
+ * Toggle Corridor 3D Orientation between Left and Right
+ */
+function toggleCorridorOrientation() {
+  const nextOrient = corridorOrientation === 'left' ? 'right' : 'left';
+  applyCorridorOrientation(nextOrient);
+  Logger.info('Corridor', `已切换调度长廊缩略图朝向为：${nextOrient === 'left' ? '向左' : '向右'}`);
 }
 
 /**
@@ -2009,8 +2032,9 @@ function toggleMinimapPosition() {
 function setupMinimapInteractions() {
   if (!btnMinimapToggle || !smMinimap) return;
 
-  // Apply stored position (Left or Right)
+  // Apply stored states (independent of each other!)
   applyMinimapPosition(minimapPosition);
+  applyCorridorOrientation(corridorOrientation);
 
   // Initial state
   btnMinimapToggle.classList.toggle('is-active', minimapEnabled);
@@ -2031,15 +2055,15 @@ function setupMinimapInteractions() {
     }
   });
 
-  // Position Toggle Button at bottom of corridor
+  // Position Toggle Button at bottom of corridor (controls corridor orientation!)
   if (btnCorridorPos) {
     btnCorridorPos.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleMinimapPosition();
+      toggleCorridorOrientation();
     });
   }
 
-  // Position Toggle Button in Minimap Header
+  // Position Toggle Button in Minimap Header (controls minimap position!)
   if (btnMinimapPos) {
     btnMinimapPos.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2047,7 +2071,7 @@ function setupMinimapInteractions() {
     });
   }
 
-  // Right-click on minimap rail quickly toggles left/right position
+  // Right-click on minimap rail quickly toggles minimap position
   smMinimap.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     toggleMinimapPosition();

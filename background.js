@@ -80,10 +80,10 @@ async function captureActiveTab(windowId, tabId, trigger = '') {
     const capturedUrl = tab.url;
     const targetWindowId = tab.windowId || windowId;
 
-    // Call captureVisibleTab strictly on the tab's specific window
+    // Call captureVisibleTab strictly on the tab's specific window with high initial quality
     chrome.tabs.captureVisibleTab(
       targetWindowId,
-      { format: 'jpeg', quality: 75 },
+      { format: 'jpeg', quality: 95 },
       async (dataUrl) => {
         if (chrome.runtime.lastError || !dataUrl) {
           return;
@@ -107,13 +107,13 @@ async function captureActiveTab(windowId, tabId, trigger = '') {
           return;
         }
 
-        // Downscale and compress screenshot to thumbnail resolution (~400px width, ~20KB)
-        const compressedUrl = await compressThumbnail(dataUrl, 400, 0.65);
+        // Downscale and compress screenshot to high-definition Retina-grade thumbnail (~1024px width, WebP 85%)
+        const compressedUrl = await compressThumbnail(dataUrl, 1024, 0.85);
 
         // Save thumbnail into IndexedDB strictly bound to this URL
         await saveThumbnail(tabId, capturedUrl, compressedUrl);
 
-        Logger.capture('Capture', `成功更新缩略图: Tab ${tabId} [${trigger}]`, {
+        Logger.capture('Capture', `成功更新高清缩略图: Tab ${tabId} [${trigger}]`, {
           title: tab.title,
           url: capturedUrl
         });
@@ -135,13 +135,14 @@ async function captureActiveTab(windowId, tabId, trigger = '') {
 }
 
 /**
- * Downscale and compress full-res screenshot to lightweight thumbnail
+ * Downscale and compress full-res screenshot to high-definition thumbnail
+ * Uses bicubic resampling and WebP (fallback JPEG) with ~1024px width for crisp Retina display
  * @param {string} dataUrl
  * @param {number} targetWidth
  * @param {number} quality
  * @returns {Promise<string>}
  */
-async function compressThumbnail(dataUrl, targetWidth = 400, quality = 0.65) {
+async function compressThumbnail(dataUrl, targetWidth = 1024, quality = 0.85) {
   let bitmap = null;
   try {
     const res = await fetch(dataUrl);
@@ -156,10 +157,19 @@ async function compressThumbnail(dataUrl, targetWidth = 400, quality = 0.65) {
     const canvas = new OffscreenCanvas(w, h);
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'medium';
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(bitmap, 0, 0, w, h);
 
-    const compressedBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+    // Encode to WebP for superior high-DPI clarity and sharp text, fallback to JPEG
+    let compressedBlob;
+    let mimeType = 'image/webp';
+    try {
+      compressedBlob = await canvas.convertToBlob({ type: 'image/webp', quality });
+    } catch (e) {
+      mimeType = 'image/jpeg';
+      compressedBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+    }
+
     const buffer = await compressedBlob.arrayBuffer();
 
     // Fast ArrayBuffer to base64
@@ -169,7 +179,7 @@ async function compressThumbnail(dataUrl, targetWidth = 400, quality = 0.65) {
     for (let i = 0; i < bytes.length; i += chunkSize) {
       binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
     }
-    return `data:image/jpeg;base64,${btoa(binary)}`;
+    return `data:${mimeType};base64,${btoa(binary)}`;
   } catch (err) {
     console.warn('[StageManager] Thumbnail compression error, using raw capture:', err);
     return dataUrl;

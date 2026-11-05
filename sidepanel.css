@@ -465,6 +465,7 @@ body {
   object-fit: cover;
   object-position: top center;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .sm-pinned-placeholder {
@@ -803,6 +804,7 @@ body {
   object-fit: cover;
   object-position: top left;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 /* Fallback card placeholder when no screenshot exists yet */
@@ -1091,6 +1093,7 @@ body.is-minimap-dragging {
   object-fit: cover;
   object-position: top left;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .sm-mini-placeholder {
@@ -1211,6 +1214,7 @@ body.is-minimap-dragging {
   object-fit: cover;
   object-position: top left;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .sm-popover-placeholder {

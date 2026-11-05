@@ -147,6 +147,36 @@
         <!-- Real-time log entries -->
       </div>
     </div>
+
+    <!-- Custom Right-Click Context Menu -->
+    <div class="sm-context-menu" id="tab-context-menu" style="display: none;">
+      <div class="sm-ctx-item" id="ctx-split-screen">
+        <span class="sm-ctx-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="12" y1="3" x2="12" y2="21"></line>
+          </svg>
+        </span>
+        <span class="sm-ctx-text">分屏</span>
+      </div>
+      <div class="sm-ctx-item" id="ctx-pin-tab">
+        <span class="sm-ctx-text">固定标签</span>
+      </div>
+      <div class="sm-ctx-item" id="ctx-new-window">
+        <span class="sm-ctx-text">在新窗口打开</span>
+      </div>
+      <div class="sm-ctx-separator"></div>
+      <div class="sm-ctx-item" id="ctx-close-others">
+        <span class="sm-ctx-text">关闭其他标签</span>
+      </div>
+      <div class="sm-ctx-item" id="ctx-close-below">
+        <span class="sm-ctx-text">关闭下方标签</span>
+      </div>
+      <div class="sm-ctx-separator"></div>
+      <div class="sm-ctx-item" id="ctx-mute-site">
+        <span class="sm-ctx-text">将网站静音</span>
+      </div>
+    </div>
   </div>
 
   <script src="logger.js"></script>

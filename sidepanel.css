@@ -1329,3 +1329,83 @@ body.is-minimap-dragging {
 .sm-log-WARN { color: #faad14; }
 .sm-log-ERROR { color: #ff4d4f; }
 
+/* ================= Right-Click Context Menu ================= */
+.sm-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 136px;
+  background: rgba(28, 30, 38, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 5px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  font-size: 12px;
+  animation: sm-menu-in 0.12s ease-out;
+}
+
+@keyframes sm-menu-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.sm-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  line-height: 1.3;
+}
+
+.sm-ctx-item:hover {
+  background: var(--accent-color);
+  color: #ffffff;
+}
+
+.sm-ctx-item:active {
+  transform: scale(0.98);
+}
+
+.sm-ctx-item.is-disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sm-ctx-icon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sm-ctx-text {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.sm-ctx-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 6px;
+}
+
+@media (prefers-color-scheme: light) {
+  .sm-context-menu {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .sm-ctx-separator {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+

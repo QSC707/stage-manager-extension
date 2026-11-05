@@ -30,6 +30,8 @@ const stageCorridor = document.getElementById('stage-corridor');
 const searchBar = document.getElementById('search-bar');
 const searchInput = document.getElementById('search-input');
 const searchClear = document.getElementById('search-clear');
+const tabContextMenu = document.getElementById('tab-context-menu');
+let contextMenuTargetTab = null;
 
 // Minimap DOM Elements
 const smMinimap = document.getElementById('sm-minimap');
@@ -117,6 +119,7 @@ async function init() {
   setupEventListeners();
   setupMinimapInteractions();
   setupDiagnosticDrawer();
+  setupContextMenuInteractions();
 
   // 6. Request capture for currently active tab
   chrome.runtime.sendMessage({ type: 'CAPTURE_CURRENT_TAB' }).catch(() => {});
@@ -336,6 +339,9 @@ function createPinnedCard(tab) {
     }
   };
 
+  // Right-click context menu
+  card.oncontextmenu = (e) => showContextMenu(e, tab);
+
   updatePinnedCardPreview(card, tab);
   return card;
 }
@@ -346,6 +352,7 @@ function createPinnedCard(tab) {
  * @param {object} tab
  */
 function updatePinnedCard(cardEl, tab) {
+  cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
   if (tab.id === activeTabId) {
     cardEl.classList.add('is-active');
   } else {
@@ -513,6 +520,9 @@ function createActiveBarCard(tab) {
     }
   };
 
+  // Right-click context menu
+  group.oncontextmenu = (e) => showContextMenu(e, tab);
+
   return group;
 }
 
@@ -524,6 +534,7 @@ function createActiveBarCard(tab) {
 function updateActiveBarCard(cardEl, tab) {
   cardEl.dataset.tabId = tab.id;
   cardEl.dataset.cardType = 'active-bar';
+  cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
 
   const titleEl = cardEl.querySelector('.sm-active-title');
   if (titleEl && titleEl.textContent !== (tab.title || '当前网页')) {
@@ -552,6 +563,7 @@ function updateActiveBarCard(cardEl, tab) {
 function updateInactiveTabCard(cardEl, tab) {
   cardEl.dataset.tabId = tab.id;
   cardEl.dataset.cardType = 'thumbnail-card';
+  cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
   // Update discarded class
   if (tab.discarded) {
     cardEl.classList.add('is-discarded');
@@ -701,6 +713,9 @@ function createInactiveTabCard(tab) {
   container.onclick = () => {
     chrome.tabs.update(tab.id, { active: true });
   };
+
+  // Right-click context menu
+  container.oncontextmenu = (e) => showContextMenu(e, tab);
 
   return container;
 }
@@ -1076,6 +1091,278 @@ function appendLogEntry(entry) {
 
 /**
  * =========================================================
+ * Custom Right-Click Context Menu
+ * =========================================================
+ */
+
+/**
+ * Show custom context menu for a specific tab
+ * @param {MouseEvent} e
+ * @param {object} tab
+ */
+function showContextMenu(e, tab) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!tabContextMenu) return;
+  contextMenuTargetTab = tab;
+
+  // 1. Split screen (native 50/50 dual pane)
+  // 2. Pin / Unpin tab dynamic text
+  const pinBtn = document.getElementById('ctx-pin-tab');
+  if (pinBtn) {
+    const pinText = pinBtn.querySelector('.sm-ctx-text');
+    if (pinText) {
+      pinText.textContent = tab.pinned ? '取消固定标签' : '固定标签';
+    }
+  }
+
+  // 3. Close other tabs & Close tabs below availability check
+  const closeOthersBtn = document.getElementById('ctx-close-others');
+  const closeBelowBtn = document.getElementById('ctx-close-below');
+
+  const currentWindowTabs = allTabs.filter(t => t.windowId === (tab.windowId || currentWindowId));
+  const unpinnedTabs = currentWindowTabs.filter(t => !t.pinned);
+
+  // Can close other tabs if there are other unpinned tabs
+  const otherUnpinned = unpinnedTabs.filter(t => t.id !== tab.id);
+  if (closeOthersBtn) {
+    if (otherUnpinned.length > 0) {
+      closeOthersBtn.classList.remove('is-disabled');
+    } else {
+      closeOthersBtn.classList.add('is-disabled');
+    }
+  }
+
+  // Can close below if there are unpinned tabs with index > tab.index
+  if (closeBelowBtn) {
+    const tabsBelow = unpinnedTabs.filter(t => t.index > tab.index);
+    if (tabsBelow.length > 0) {
+      closeBelowBtn.classList.remove('is-disabled');
+    } else {
+      closeBelowBtn.classList.add('is-disabled');
+    }
+  }
+
+  // 4. Mute / Unmute site dynamic text
+  const muteBtn = document.getElementById('ctx-mute-site');
+  if (muteBtn) {
+    const isMuted = Boolean(tab.mutedInfo && tab.mutedInfo.muted);
+    const muteText = muteBtn.querySelector('.sm-ctx-text');
+    if (muteText) {
+      muteText.textContent = isMuted ? '取消网站静音' : '将网站静音';
+    }
+  }
+
+  // Position and display menu
+  tabContextMenu.style.display = 'block';
+  tabContextMenu.style.visibility = 'hidden';
+
+  const menuWidth = tabContextMenu.offsetWidth || 150;
+  const menuHeight = tabContextMenu.offsetHeight || 190;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let x = e.clientX;
+  let y = e.clientY;
+
+  // Boundary checks to prevent overflowing outside the side panel viewport
+  if (x + menuWidth > viewportWidth - 8) {
+    x = Math.max(8, viewportWidth - menuWidth - 8);
+  }
+  if (y + menuHeight > viewportHeight - 8) {
+    y = Math.max(8, viewportHeight - menuHeight - 8);
+  }
+
+  tabContextMenu.style.left = `${x}px`;
+  tabContextMenu.style.top = `${y}px`;
+  tabContextMenu.style.visibility = 'visible';
+}
+
+/**
+ * Dismiss context menu
+ */
+function hideContextMenu() {
+  if (tabContextMenu && tabContextMenu.style.display !== 'none') {
+    tabContextMenu.style.display = 'none';
+    contextMenuTargetTab = null;
+  }
+}
+
+/**
+ * Setup interactions for Context Menu actions & auto-dismissal
+ */
+function setupContextMenuInteractions() {
+  if (!tabContextMenu) return;
+
+  // 1. Native Split Screen (50/50 dual-pane windows side by side)
+  const splitBtn = document.getElementById('ctx-split-screen');
+  if (splitBtn) {
+    splitBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+
+      try {
+        const currentWin = await chrome.windows.getCurrent();
+        const availLeft = window.screen.availLeft !== undefined ? window.screen.availLeft : 0;
+        const availTop = window.screen.availTop !== undefined ? window.screen.availTop : 0;
+        const availWidth = window.screen.availWidth || window.screen.width;
+        const availHeight = window.screen.availHeight || window.screen.height;
+        const halfWidth = Math.floor(availWidth / 2);
+
+        // Snap current window to left half of screen
+        await chrome.windows.update(currentWin.id, {
+          state: 'normal',
+          left: availLeft,
+          top: availTop,
+          width: halfWidth,
+          height: availHeight
+        });
+
+        // Snap target tab into new window on right half of screen
+        await chrome.windows.create({
+          tabId: targetTab.id,
+          left: availLeft + halfWidth,
+          top: availTop,
+          width: availWidth - halfWidth,
+          height: availHeight,
+          focused: true
+        });
+        Logger.info('SidePanel', `已完成分屏布局: 标签 [${targetTab.title}]`);
+      } catch (err) {
+        Logger.error('SidePanel', '分屏操作失败:', err);
+      }
+    });
+  }
+
+  // 2. Pin / Unpin Tab
+  const pinBtn = document.getElementById('ctx-pin-tab');
+  if (pinBtn) {
+    pinBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      try {
+        await chrome.tabs.update(targetTab.id, { pinned: !targetTab.pinned });
+        Logger.info('SidePanel', `${targetTab.pinned ? '取消固定' : '固定'}标签 [${targetTab.title}]`);
+      } catch (err) {
+        Logger.error('SidePanel', '固定/取消固定标签失败:', err);
+      }
+    });
+  }
+
+  // 3. Open in New Window
+  const newWinBtn = document.getElementById('ctx-new-window');
+  if (newWinBtn) {
+    newWinBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      try {
+        await chrome.windows.create({
+          tabId: targetTab.id,
+          focused: true
+        });
+        Logger.info('SidePanel', `在新窗口打开标签 [${targetTab.title}]`);
+      } catch (err) {
+        Logger.error('SidePanel', '在新窗口打开失败:', err);
+      }
+    });
+  }
+
+  // 4. Close Other Tabs
+  const closeOthersBtn = document.getElementById('ctx-close-others');
+  if (closeOthersBtn) {
+    closeOthersBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab || closeOthersBtn.classList.contains('is-disabled')) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      try {
+        const tabs = await chrome.tabs.query({ windowId: targetTab.windowId });
+        const toRemove = tabs.filter(t => !t.pinned && t.id !== targetTab.id).map(t => t.id);
+        if (toRemove.length > 0) {
+          await chrome.tabs.remove(toRemove);
+          Logger.info('SidePanel', `已关闭其他 ${toRemove.length} 个标签`);
+        }
+      } catch (err) {
+        Logger.error('SidePanel', '关闭其他标签失败:', err);
+      }
+    });
+  }
+
+  // 5. Close Tabs Below
+  const closeBelowBtn = document.getElementById('ctx-close-below');
+  if (closeBelowBtn) {
+    closeBelowBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab || closeBelowBtn.classList.contains('is-disabled')) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      try {
+        const tabs = await chrome.tabs.query({ windowId: targetTab.windowId });
+        const toRemove = tabs.filter(t => !t.pinned && t.index > targetTab.index).map(t => t.id);
+        if (toRemove.length > 0) {
+          await chrome.tabs.remove(toRemove);
+          Logger.info('SidePanel', `已关闭下方 ${toRemove.length} 个标签`);
+        }
+      } catch (err) {
+        Logger.error('SidePanel', '关闭下方标签失败:', err);
+      }
+    });
+  }
+
+  // 6. Mute / Unmute Site
+  const muteBtn = document.getElementById('ctx-mute-site');
+  if (muteBtn) {
+    muteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!contextMenuTargetTab) return;
+      const targetTab = contextMenuTargetTab;
+      hideContextMenu();
+      try {
+        const isMuted = Boolean(targetTab.mutedInfo && targetTab.mutedInfo.muted);
+        await chrome.tabs.update(targetTab.id, { muted: !isMuted });
+        Logger.info('SidePanel', `${isMuted ? '取消静音' : '静音'}网站 [${targetTab.title}]`);
+      } catch (err) {
+        Logger.error('SidePanel', '静音/取消静音失败:', err);
+      }
+    });
+  }
+
+  // Dismiss listeners
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#tab-context-menu')) {
+      hideContextMenu();
+    }
+  });
+
+  document.addEventListener('contextmenu', (e) => {
+    if (!e.target.closest('[data-tab-id]')) {
+      hideContextMenu();
+    }
+  });
+
+  window.addEventListener('blur', hideContextMenu);
+  window.addEventListener('resize', hideContextMenu);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideContextMenu();
+    }
+  });
+
+  if (stageCorridor) {
+    stageCorridor.addEventListener('scroll', hideContextMenu, { passive: true });
+  }
+}
+
+/**
+ * =========================================================
  * VS Code Style Thumbnail Minimap Rail
  * =========================================================
  */
@@ -1190,6 +1477,9 @@ function createMiniActiveBar(tab) {
     hideMinimapPopover();
   };
 
+  // Right-click context menu
+  card.oncontextmenu = (e) => showContextMenu(e, tab);
+
   return card;
 }
 
@@ -1202,6 +1492,7 @@ function updateMiniActiveBar(cardEl, tab) {
   cardEl.dataset.tabId = tab.id;
   cardEl.dataset.miniType = 'active-bar';
   cardEl.title = `${tab.title || '当前网页'} (当前激活)`;
+  cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
 
   const fav = cardEl.querySelector('.sm-mini-active-fav');
   const expectedFav = tab.favIconUrl || getFallbackFavicon(tab.url);
@@ -1253,6 +1544,9 @@ function createMiniCard(tab, isActive = false) {
     hideMinimapPopover();
   };
 
+  // Right-click context menu
+  card.oncontextmenu = (e) => showContextMenu(e, tab);
+
   return card;
 }
 
@@ -1265,6 +1559,7 @@ function createMiniCard(tab, isActive = false) {
 function updateMiniCard(cardEl, tab, isActive = false) {
   cardEl.dataset.tabId = tab.id;
   cardEl.dataset.miniType = 'thumbnail-card';
+  cardEl.oncontextmenu = (e) => showContextMenu(e, tab);
   if (isActive) {
     cardEl.classList.add('is-active');
   } else {

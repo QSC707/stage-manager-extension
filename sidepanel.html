@@ -8,10 +8,10 @@
 </head>
 <body>
   <div class="sm-container">
-    <!-- Pinned Tabs Module & Directory Toggle (Permanently Fixed at Top) -->
-    <section class="sm-pinned-section has-no-pinned" id="pinned-stage-section">
+    <!-- Pinned Tabs Module (Permanently Fixed at Top) -->
+    <section class="sm-pinned-section" id="pinned-stage-section" style="display: none;">
       <div class="sm-section-header">
-        <div class="sm-pinned-title-wrap" id="pinned-title-wrap" style="display: none;">
+        <div class="sm-pinned-title-wrap" id="pinned-title-wrap">
           <span class="sm-section-label sm-pinned-title">
             <svg class="sm-pin-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="17" x2="12" y2="22"></line>
@@ -21,33 +21,46 @@
           </span>
           <span class="sm-pinned-badge" id="pinned-count">0</span>
         </div>
-        <div class="sm-header-spacer"></div>
-        <button class="sm-top-toggle-btn" id="btn-minimap-toggle" title="展开/收起缩略图大纲目录">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="3" x2="16" y2="21"></line>
-            <line x1="19" y1="7" x2="18" y2="7"></line>
-            <line x1="19" y1="11" x2="18" y2="11"></line>
-            <line x1="19" y1="15" x2="18" y2="15"></line>
-          </svg>
-          <span>目录</span>
-        </button>
       </div>
-      <div class="sm-pinned-grid" id="pinned-grid" style="display: none;">
+      <div class="sm-pinned-grid" id="pinned-grid">
         <!-- Adaptive Square Thumbnails rendered dynamically -->
       </div>
     </section>
 
     <!-- Stage Manager Main Body: Corridor + VS Code Style Minimap -->
     <div class="sm-body-wrapper" id="body-wrapper">
-      <!-- Stage Manager Strip Corridor -->
-      <main class="sm-corridor" id="stage-corridor">
-        <!-- Inactive Stage Corridor -->
-        <div class="sm-section-label" id="inactive-section-label">调度长廊 (Stage Strip)</div>
-        <div class="sm-stages-list" id="stages-list">
-          <!-- Rendered dynamically with 3D thumbnails -->
-        </div>
-      </main>
+      <!-- Corridor Container (Scrollable Corridor + Compact Bottom Control Dock) -->
+      <div class="sm-corridor-wrapper" id="corridor-wrapper">
+        <main class="sm-corridor" id="stage-corridor">
+          <!-- Inactive Stage Corridor -->
+          <div class="sm-section-label" id="inactive-section-label">调度长廊 (Stage Strip)</div>
+          <div class="sm-stages-list" id="stages-list">
+            <!-- Rendered dynamically with 3D thumbnails -->
+          </div>
+        </main>
+
+        <!-- Compact Bottom Control Dock -->
+        <footer class="sm-corridor-footer" id="corridor-footer">
+          <button class="sm-footer-btn" id="btn-minimap-toggle" title="展开/收起缩略图大纲目录">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="3" x2="16" y2="21"></line>
+              <line x1="19" y1="7" x2="18" y2="7"></line>
+              <line x1="19" y1="11" x2="18" y2="11"></line>
+              <line x1="19" y1="15" x2="18" y2="15"></line>
+            </svg>
+            <span>目录</span>
+          </button>
+          <button class="sm-footer-btn" id="btn-corridor-pos" title="切换调度长廊左右显示">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="7 16 3 12 7 8"></polyline>
+              <polyline points="17 8 21 12 17 16"></polyline>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+            <span id="txt-corridor-pos">左右</span>
+          </button>
+        </footer>
+      </div>
 
       <!-- VS Code Style Thumbnail Minimap Rail -->
       <aside class="sm-minimap" id="sm-minimap">

@@ -24,6 +24,8 @@ const tabCountEl = document.getElementById('tab-count');
 const btnNewTab = document.getElementById('btn-new-tab');
 const btnSearchToggle = document.getElementById('btn-search-toggle');
 const btnMinimapToggle = document.getElementById('btn-minimap-toggle');
+const btnCorridorPos = document.getElementById('btn-corridor-pos');
+const txtCorridorPos = document.getElementById('txt-corridor-pos');
 const btnLogsToggle = document.getElementById('btn-logs-toggle');
 const bodyWrapper = document.getElementById('body-wrapper');
 const stageCorridor = document.getElementById('stage-corridor');
@@ -172,7 +174,10 @@ function render() {
   }
 
   if (displayTabs.length === 0) {
-    if (pinnedStageSection) pinnedStageSection.classList.add('has-no-pinned');
+    if (pinnedStageSection) {
+      pinnedStageSection.style.display = 'none';
+      pinnedStageSection.classList.add('has-no-pinned');
+    }
     const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
     if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
     if (pinnedGrid) {
@@ -197,13 +202,19 @@ function render() {
   // 1. Render Top Pinned Tabs Module (Constant adaptive square grid)
   const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
   if (pinnedTabs.length > 0) {
-    if (pinnedStageSection) pinnedStageSection.classList.remove('has-no-pinned');
+    if (pinnedStageSection) {
+      pinnedStageSection.style.display = 'block';
+      pinnedStageSection.classList.remove('has-no-pinned');
+    }
     if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'flex';
     if (pinnedGrid) pinnedGrid.style.display = 'grid';
     if (pinnedCountEl) pinnedCountEl.textContent = pinnedTabs.length;
     renderPinnedGrid(pinnedTabs);
   } else {
-    if (pinnedStageSection) pinnedStageSection.classList.add('has-no-pinned');
+    if (pinnedStageSection) {
+      pinnedStageSection.style.display = 'none';
+      pinnedStageSection.classList.add('has-no-pinned');
+    }
     if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
     if (pinnedGrid) {
       pinnedGrid.style.display = 'none';
@@ -1969,8 +1980,16 @@ function applyMinimapPosition(pos) {
   }
   if (btnMinimapPos) {
     btnMinimapPos.title = pos === 'left'
-      ? '当前在左侧，点击切换到右侧 (右键亦可切换)'
-      : '当前在右侧，点击切换到左侧 (右键亦可切换)';
+      ? '目录当前在左侧，点击切换到右侧 (右键亦可切换)'
+      : '目录当前在右侧，点击切换到左侧 (右键亦可切换)';
+  }
+  if (btnCorridorPos) {
+    btnCorridorPos.title = pos === 'left'
+      ? '调度长廊当前在右侧，点击切换到左侧'
+      : '调度长廊当前在左侧，点击切换到右侧';
+    if (txtCorridorPos) {
+      txtCorridorPos.textContent = pos === 'left' ? '长廊在右' : '长廊在左';
+    }
   }
   scheduleMinimapSliderUpdate();
 }
@@ -1981,7 +2000,7 @@ function applyMinimapPosition(pos) {
 function toggleMinimapPosition() {
   const nextPos = minimapPosition === 'left' ? 'right' : 'left';
   applyMinimapPosition(nextPos);
-  Logger.info('Minimap', `已切换缩略图目录至${nextPos === 'left' ? '左侧' : '右侧'}`);
+  Logger.info('Minimap', `已切换调度长廊与目录显示位置：长廊${nextPos === 'left' ? '在右' : '在左'}`);
 }
 
 /**
@@ -1999,7 +2018,7 @@ function setupMinimapInteractions() {
     smMinimap.classList.add('is-hidden');
   }
 
-  // Toggle button in header
+  // Toggle button at the bottom of the corridor
   btnMinimapToggle.addEventListener('click', () => {
     minimapEnabled = !minimapEnabled;
     localStorage.setItem('sm_minimap_enabled', String(minimapEnabled));
@@ -2011,6 +2030,14 @@ function setupMinimapInteractions() {
       hideMinimapPopover();
     }
   });
+
+  // Position Toggle Button at bottom of corridor
+  if (btnCorridorPos) {
+    btnCorridorPos.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMinimapPosition();
+    });
+  }
 
   // Position Toggle Button in Minimap Header
   if (btnMinimapPos) {

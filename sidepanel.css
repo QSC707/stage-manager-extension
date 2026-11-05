@@ -5,6 +5,7 @@
 :root {
   --bg-primary: #3C3C3C;
   --bg-glass: rgba(60, 60, 60, 0.86);
+  --bg-panel-rail: rgba(32, 32, 34, 0.78);
   --bg-card: rgba(255, 255, 255, 0.08);
   --bg-card-hover: rgba(255, 255, 255, 0.14);
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -27,6 +28,7 @@
   :root {
     --bg-primary: #f5f5f7;
     --bg-glass: rgba(255, 255, 255, 0.82);
+    --bg-panel-rail: rgba(240, 240, 243, 0.82);
     --bg-card: rgba(255, 255, 255, 0.9);
     --bg-card-hover: #ffffff;
     --border-subtle: rgba(0, 0, 0, 0.06);
@@ -36,10 +38,6 @@
     --text-secondary: #6e6e73;
     --text-muted: #86868b;
     --accent-glow: rgba(0, 122, 255, 0.2);
-  }
-
-  .sm-pinned-section {
-    background: rgba(0, 0, 0, 0.02);
   }
 
   .sm-pinned-card {
@@ -272,13 +270,23 @@ body {
   position: relative;
 }
 
-.sm-corridor {
+.sm-corridor-wrapper {
   flex: 1;
   min-width: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.sm-corridor {
+  flex: 1;
+  min-width: 0;
+  height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 6px 12px 16px 12px;
+  padding: 6px 12px 6px 12px;
   /* Instant 1:1 scroll responsiveness without frame-fighting animation lag */
   scroll-behavior: auto;
 }
@@ -296,14 +304,93 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* ================= Compact Bottom Control Dock ("很小的区域按钮") ================= */
+.sm-corridor-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 4px 12px 6px 12px;
+  background: transparent;
+  z-index: 6;
+}
+
+.sm-body-wrapper.minimap-left .sm-corridor-footer {
+  justify-content: flex-start;
+}
+
+.sm-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.sm-footer-btn svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: transform 0.15s ease;
+}
+
+.sm-footer-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.sm-footer-btn:hover svg {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.sm-footer-btn:active {
+  transform: scale(0.96);
+}
+
+.sm-footer-btn.is-active {
+  background: rgba(0, 122, 255, 0.18);
+  border-color: rgba(0, 122, 255, 0.45);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: light) {
+  .sm-footer-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--text-secondary);
+  }
+  .sm-footer-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-primary);
+  }
+  .sm-footer-btn.is-active {
+    background: rgba(0, 122, 255, 0.12);
+    border-color: rgba(0, 122, 255, 0.3);
+    color: var(--accent-color);
+  }
+}
+
 /* ================= Pinned Tabs Section (Top Constant Module, Adaptive Square Grid) ================= */
 .sm-pinned-section {
   flex-shrink: 0;
   margin: 0;
-  padding: 6px 12px 10px;
-  background: rgba(45, 45, 45, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 8px 12px 10px;
+  background: var(--bg-panel-rail);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
   z-index: 10;
@@ -315,7 +402,7 @@ body {
 
 .sm-pinned-section.has-no-pinned {
   padding: 4px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .sm-pinned-section::-webkit-scrollbar {
@@ -378,76 +465,6 @@ body {
   padding: 1px 6px;
   border-radius: 10px;
   border: 1px solid var(--border-subtle);
-}
-
-.sm-header-spacer {
-  flex: 1;
-}
-
-.sm-top-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.sm-top-toggle-btn svg {
-  flex-shrink: 0;
-  opacity: 0.85;
-  transition: transform 0.15s ease;
-}
-
-.sm-top-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.sm-top-toggle-btn:hover svg {
-  opacity: 1;
-  transform: scale(1.08);
-}
-
-.sm-top-toggle-btn:active {
-  transform: scale(0.96);
-}
-
-.sm-top-toggle-btn.is-active {
-  background: rgba(0, 122, 255, 0.18);
-  border-color: rgba(0, 122, 255, 0.45);
-  color: var(--accent-color);
-  font-weight: 600;
-}
-
-@media (prefers-color-scheme: light) {
-  .sm-pinned-section {
-    background: rgba(245, 245, 247, 0.85);
-  }
-  .sm-top-toggle-btn {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: #444444;
-  }
-  .sm-top-toggle-btn:hover {
-    background: rgba(0, 0, 0, 0.09);
-    color: #000000;
-  }
-  .sm-top-toggle-btn.is-active {
-    background: rgba(0, 122, 255, 0.14);
-    border-color: rgba(0, 122, 255, 0.5);
-    color: var(--accent-color);
-  }
 }
 
 .sm-pinned-grid {
@@ -789,29 +806,38 @@ body {
   transform: scale(1.12);
 }
 
-/* ================= Inactive Stage 3D Perspective Card (macOS Stage Manager Style) ================= */
+/* ================= Inactive Stage 3D Perspective Card (macOS 27" Retina Style) ================= */
 .sm-stages-list .sm-stage-group {
-  perspective: 900px;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
   transform-style: preserve-3d;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
 }
 
 .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: perspective(900px) rotateY(12deg) scale(0.93);
+  transform: perspective(1400px) rotateY(6deg) scale(0.96);
   transform-origin: center center;
-  transition: transform 0.32s var(--spring-easing), box-shadow 0.32s ease, filter 0.25s ease;
-  filter: brightness(0.92) contrast(1.02);
+  transition: transform 0.34s var(--spring-easing), box-shadow 0.34s ease, filter 0.25s ease;
+  filter: brightness(0.94) contrast(1.02);
   border-radius: var(--radius-md);
-  box-shadow: 4px 10px 24px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 3px 6px rgba(0, 0, 0, 0.25),
+    0 10px 24px -4px rgba(0, 0, 0, 0.45),
+    0 20px 42px -8px rgba(0, 0, 0, 0.5);
   overflow: visible;
 }
 
 /* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */
 .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: perspective(900px) rotateY(0deg) scale(1.0);
+  transform: perspective(1400px) rotateY(0deg) scale(1.015);
   filter: brightness(1) contrast(1);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 6px 12px rgba(0, 0, 0, 0.28),
+    0 18px 38px -6px rgba(0, 0, 0, 0.55),
+    0 30px 60px -8px rgba(0, 0, 0, 0.65);
   z-index: 5;
 }
 
@@ -973,8 +999,31 @@ body {
   justify-content: center;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42);
-  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  transition: border-color 0.25s ease;
+}
+
+/* Apple Mac 27" Liquid Retina Glass Sheen Reflection */
+.sm-card-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sm-card-preview::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 60%, transparent 100%);
+  border-radius: 16px 16px 0 0;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .sm-card-preview img {
@@ -988,8 +1037,7 @@ body {
 }
 
 .sm-stage-group:hover .sm-card-preview {
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 /* Fallback card placeholder when no screenshot exists yet */
@@ -1063,18 +1111,26 @@ body {
 }
 
 .sm-body-wrapper.minimap-left .sm-corridor {
-  padding: 6px 12px 16px 12px;
+  padding: 6px 12px 6px 12px;
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: perspective(900px) rotateY(-12deg) scale(0.93);
+  transform: perspective(1400px) rotateY(-6deg) scale(0.96);
   transform-origin: center center;
-  box-shadow: -4px 10px 24px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 3px 6px rgba(0, 0, 0, 0.25),
+    0 10px 24px -4px rgba(0, 0, 0, 0.45),
+    0 20px 42px -8px rgba(0, 0, 0, 0.5);
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: perspective(900px) rotateY(0deg) scale(1.0);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: perspective(1400px) rotateY(0deg) scale(1.015);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 6px 12px rgba(0, 0, 0, 0.28),
+    0 18px 38px -6px rgba(0, 0, 0, 0.55),
+    0 30px 60px -8px rgba(0, 0, 0, 0.65);
 }
 
 .sm-body-wrapper.minimap-left .sm-minimap-popover {
@@ -1099,9 +1155,9 @@ body.is-minimap-dragging {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: rgba(18, 20, 26, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--bg-panel-rail);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-left: 1px solid var(--border-subtle);
   position: relative;
   user-select: none;
@@ -1124,8 +1180,8 @@ body.is-minimap-dragging {
   align-items: center;
   justify-content: space-between;
   padding: 0 5px 0 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
 }
 
 .sm-minimap-label {
@@ -1429,11 +1485,11 @@ body.is-minimap-dragging {
 
 @media (prefers-color-scheme: light) {
   .sm-minimap {
-    background: rgba(240, 242, 245, 0.65);
+    background: var(--bg-panel-rail);
   }
   .sm-minimap-header {
-    border-bottom-color: rgba(0, 0, 0, 0.06);
-    background: rgba(0, 0, 0, 0.02);
+    border-bottom-color: var(--border-subtle);
+    background: transparent;
   }
   .sm-mini-card {
     border-color: rgba(0, 0, 0, 0.12);
@@ -1451,6 +1507,23 @@ body.is-minimap-dragging {
     background: rgba(255, 255, 255, 0.95);
     border-color: rgba(0, 0, 0, 0.12);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  }
+  .sm-stages-list .sm-stage-group .sm-card-wrapper {
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 3px 6px rgba(0, 0, 0, 0.06),
+      0 10px 24px -4px rgba(0, 0, 0, 0.12),
+      0 20px 38px -8px rgba(0, 0, 0, 0.15);
+  }
+  .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 0.12),
+      0 6px 12px rgba(0, 0, 0, 0.08),
+      0 18px 36px -6px rgba(0, 0, 0, 0.18),
+      0 30px 54px -8px rgba(0, 0, 0, 0.22);
+  }
+  .sm-card-preview::before {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(0, 0, 0, 0.06);
   }
 }
 

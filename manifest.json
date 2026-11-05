@@ -19,8 +19,7 @@
   "permissions": [
     "tabs",
     "sidePanel",
-    "storage",
-    "tabGroups"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"

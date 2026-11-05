@@ -339,6 +339,9 @@ function createPinnedCard(tab) {
     }
   };
 
+  // Audio indicator (sound playing / muted)
+  updatePinnedCardAudio(card, tab);
+
   // Right-click context menu
   card.oncontextmenu = (e) => showContextMenu(e, tab);
 
@@ -378,7 +381,46 @@ function updatePinnedCard(cardEl, tab) {
     favEl.src = expectedFav;
   }
 
+  // Update audio indicator
+  updatePinnedCardAudio(cardEl, tab);
+
   updatePinnedCardPreview(cardEl, tab);
+}
+
+/**
+ * Update audio playing / muted status indicator for pinned card
+ * @param {HTMLElement} cardEl
+ * @param {object} tab
+ */
+function updatePinnedCardAudio(cardEl, tab) {
+  let audioBtn = cardEl.querySelector('.sm-pinned-audio');
+  const isAudible = Boolean(tab.audible);
+  const isMuted = Boolean(tab.mutedInfo && tab.mutedInfo.muted);
+
+  if (isAudible || isMuted) {
+    if (!audioBtn) {
+      audioBtn = document.createElement('div');
+      audioBtn.className = 'sm-pinned-audio';
+      cardEl.appendChild(audioBtn);
+    }
+
+    if (isMuted) {
+      audioBtn.className = 'sm-pinned-audio is-muted';
+      audioBtn.title = '取消静音 (网页已静音)';
+      audioBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+    } else {
+      audioBtn.className = 'sm-pinned-audio is-playing';
+      audioBtn.title = '静音此标签页 (正在播放声音)';
+      audioBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+    }
+
+    audioBtn.onclick = (e) => {
+      e.stopPropagation();
+      chrome.tabs.update(tab.id, { muted: !isMuted });
+    };
+  } else if (audioBtn) {
+    audioBtn.remove();
+  }
 }
 
 /**
@@ -392,6 +434,13 @@ function updatePinnedCardPreview(cardEl, tab) {
 
   const normUrl = normalizeUrl(tab.url);
   const currentRenderedUrl = previewEl.dataset.renderedUrl;
+
+  // Requirement: "顶部固定的缩略图，在当前前台的标签页不应该持续刷新的"
+  // If this tab is the active foreground tab and already has a rendered thumbnail for this URL,
+  // DO NOT continuously refresh or re-flash it while actively viewing!
+  if (tab.id === activeTabId && currentRenderedUrl === normUrl) {
+    return;
+  }
 
   if (currentRenderedUrl && currentRenderedUrl !== normUrl) {
     renderPinnedPlaceholder(previewEl, tab);
@@ -849,10 +898,17 @@ function setupEventListeners() {
       });
 
       // 1. If pinned tab: update pinned card thumbnail
+      // REQUIREMENT: "顶部固定的缩略图，在当前前台的标签页不应该持续刷新的"
       if (currentTab.pinned && pinnedGrid) {
         const pinnedCardEl = pinnedGrid.querySelector(`[data-tab-id="${tabId}"]`);
         if (pinnedCardEl) {
-          updatePinnedCardPreview(pinnedCardEl, currentTab);
+          const previewEl = pinnedCardEl.querySelector('.sm-pinned-preview');
+          const alreadyRendered = previewEl && previewEl.dataset.renderedUrl === messageUrl;
+          if (tabId === activeTabId && alreadyRendered) {
+            // Actively viewing foreground tab: do NOT continuously touch or re-flash!
+          } else {
+            updatePinnedCardPreview(pinnedCardEl, currentTab);
+          }
         }
       }
 
@@ -907,6 +963,7 @@ function setupEventListeners() {
         changeInfo.favIconUrl ||
         changeInfo.url ||
         changeInfo.audible !== undefined ||
+        changeInfo.mutedInfo !== undefined ||
         changeInfo.discarded !== undefined
       ) {
         scheduleRefresh();
@@ -1195,7 +1252,7 @@ function hideContextMenu() {
 function setupContextMenuInteractions() {
   if (!tabContextMenu) return;
 
-  // 1. Native Split Screen (50/50 dual-pane windows side by side)
+  // 1. Browser Native Split Screen (Single-window side-by-side tab split view)
   const splitBtn = document.getElementById('ctx-split-screen');
   if (splitBtn) {
     splitBtn.addEventListener('click', async (e) => {
@@ -1205,34 +1262,81 @@ function setupContextMenuInteractions() {
       hideContextMenu();
 
       try {
-        const currentWin = await chrome.windows.getCurrent();
-        const availLeft = window.screen.availLeft !== undefined ? window.screen.availLeft : 0;
-        const availTop = window.screen.availTop !== undefined ? window.screen.availTop : 0;
-        const availWidth = window.screen.availWidth || window.screen.width;
-        const availHeight = window.screen.availHeight || window.screen.height;
-        const halfWidth = Math.floor(availWidth / 2);
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        // Snap current window to left half of screen
-        await chrome.windows.update(currentWin.id, {
-          state: 'normal',
-          left: availLeft,
-          top: availTop,
-          width: halfWidth,
-          height: availHeight
-        });
+        // 1. Use Chromium Tabs Split View API: chrome.tabs.createSplit([firstId, secondId])
+        if (typeof chrome.tabs.createSplit === 'function') {
+          let firstId = activeTab ? activeTab.id : null;
+          let secondId = targetTab.id;
 
-        // Snap target tab into new window on right half of screen
-        await chrome.windows.create({
-          tabId: targetTab.id,
-          left: availLeft + halfWidth,
-          top: availTop,
-          width: availWidth - halfWidth,
-          height: availHeight,
-          focused: true
-        });
-        Logger.info('SidePanel', `已完成分屏布局: 标签 [${targetTab.title}]`);
+          if (firstId === secondId) {
+            // Clicked active tab itself: find adjacent tab to pair with, or create new split tab
+            const currentTabs = await chrome.tabs.query({ currentWindow: true });
+            const adjacent = currentTabs.find(t => t.id !== targetTab.id && Math.abs(t.index - targetTab.index) === 1);
+            if (adjacent) {
+              secondId = adjacent.id;
+            } else if (typeof chrome.tabs.create === 'function') {
+              await chrome.tabs.create({ splitWithTabId: targetTab.id });
+              Logger.info('SidePanel', `浏览器原生分屏成功 (新建并排标签): Tab [${targetTab.title}]`);
+              return;
+            }
+          }
+
+          if (firstId && secondId && firstId !== secondId) {
+            const currentTabs = await chrome.tabs.query({ currentWindow: true });
+            const t1 = currentTabs.find(t => t.id === firstId);
+            const t2 = currentTabs.find(t => t.id === secondId);
+
+            if (t1 && t2) {
+              // Constraint 1: Matching pinned states
+              if (t1.pinned !== t2.pinned) {
+                await chrome.tabs.update(t2.id, { pinned: t1.pinned });
+              }
+
+              // Constraint 2: Adjacent tab indices
+              const freshTabs = await chrome.tabs.query({ currentWindow: true });
+              const freshT1 = freshTabs.find(t => t.id === firstId);
+              const freshT2 = freshTabs.find(t => t.id === secondId);
+
+              if (freshT1 && freshT2 && Math.abs(freshT1.index - freshT2.index) !== 1) {
+                const targetIndex = freshT1.index < freshT2.index ? freshT1.index + 1 : freshT1.index;
+                await chrome.tabs.move(freshT2.id, { index: targetIndex });
+              }
+
+              // Constraint 3: Unsplit if already split
+              if (typeof chrome.tabs.unsplit === 'function') {
+                if (t1.splitViewId && t1.splitViewId !== -1) {
+                  try { await chrome.tabs.unsplit(t1.splitViewId); } catch (e) {}
+                }
+                if (t2.splitViewId && t2.splitViewId !== -1) {
+                  try { await chrome.tabs.unsplit(t2.splitViewId); } catch (e) {}
+                }
+              }
+
+              await chrome.tabs.createSplit([firstId, secondId]);
+              Logger.info('SidePanel', `浏览器原生单窗口分屏成功: Tab [${t1.title}] + Tab [${t2.title}]`);
+              return;
+            }
+          }
+        }
+
+        // 2. Fallback: Try chrome.tabs.create with splitWithTabId
+        if (activeTab && activeTab.id !== targetTab.id) {
+          try {
+            await chrome.tabs.create({ url: targetTab.url, splitWithTabId: activeTab.id });
+            await chrome.tabs.remove(targetTab.id);
+            Logger.info('SidePanel', `通过 splitWithTabId 原生分屏成功: Tab [${targetTab.title}]`);
+            return;
+          } catch (e) {
+            Logger.warn('SidePanel', 'splitWithTabId 尝试失败:', e);
+          }
+        }
+
+        // 3. Fallback: If neither API is supported in the current browser runtime
+        Logger.warn('SidePanel', '当前浏览器未开放扩展程序直接调用单窗口原生分屏 API (chrome.tabs.createSplit)');
+        alert('当前浏览器环境尚未开放扩展直接调用单窗口原生分屏 API。您可以在标签栏右键选择「将标签页添加到新分屏视图」或使用浏览器分屏快捷键。');
       } catch (err) {
-        Logger.error('SidePanel', '分屏操作失败:', err);
+        Logger.error('SidePanel', '浏览器原生分屏失败:', err);
       }
     });
   }

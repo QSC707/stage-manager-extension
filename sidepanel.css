@@ -394,6 +394,71 @@ body {
   z-index: 4;
 }
 
+/* Pinned Card Audio Indicator (Playing / Muted) */
+.sm-pinned-audio {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 19px;
+  height: 19px;
+  border-radius: var(--radius-sm);
+  background: rgba(18, 20, 26, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 6;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.sm-pinned-audio:hover {
+  background: rgba(18, 20, 26, 0.95);
+  border-color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+.sm-pinned-audio.is-playing {
+  color: #52c41a;
+  border-color: rgba(82, 196, 26, 0.45);
+  box-shadow: 0 0 8px rgba(82, 196, 26, 0.3);
+  animation: sm-audio-pulse 2s infinite ease-in-out;
+}
+
+@keyframes sm-audio-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.sm-pinned-audio.is-muted {
+  color: #ff4d4f;
+  border-color: rgba(255, 77, 79, 0.45);
+}
+
+@media (prefers-color-scheme: light) {
+  .sm-pinned-audio {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #333333;
+  }
+  .sm-pinned-audio:hover {
+    background: #ffffff;
+    border-color: var(--accent-color);
+  }
+  .sm-pinned-audio.is-playing {
+    color: #389e0d;
+    border-color: rgba(56, 158, 13, 0.45);
+    box-shadow: 0 0 6px rgba(56, 158, 13, 0.25);
+  }
+  .sm-pinned-audio.is-muted {
+    color: #cf1322;
+    border-color: rgba(207, 19, 34, 0.45);
+  }
+}
+
 .sm-pinned-img {
   width: 100%;
   height: 100%;

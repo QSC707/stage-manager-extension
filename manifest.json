@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Stage Manager for Browser (台前调度)",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "macOS 风格的网页台前调度扩展，以 3D 视觉长廊、实时缩略图与多任务编组革新浏览器标签页切换体验。",
   "icons": {
     "16": "icons/icon16.png",

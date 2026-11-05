@@ -705,25 +705,23 @@ body {
 
 /* ================= Inactive Stage 3D Perspective Card (macOS 27" Retina Style) ================= */
 .sm-stages-list .sm-stage-group {
-  perspective: 650px;
-  perspective-origin: 50% 50%;
-  transform-style: preserve-3d;
+  position: relative;
   width: 100%;
   margin-bottom: 9px;
 }
 
 .sm-stages-list .sm-stage-group .sm-card-wrapper {
   position: relative;
-  transform: perspective(650px) rotateY(18deg) scale(0.93);
+  transform: perspective(1000px) rotateY(13deg) scale(0.95);
   transform-origin: center center;
-  transition: transform 0.34s var(--spring-easing), box-shadow 0.34s ease, filter 0.25s ease;
+  transition: transform 0.32s var(--spring-easing), box-shadow 0.32s ease, filter 0.25s ease;
   filter: brightness(0.94) contrast(1.02);
   border-radius: var(--radius-md);
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.08),
-    5px 4px 12px rgba(0, 0, 0, 0.32),
-    12px 14px 30px -4px rgba(0, 0, 0, 0.5),
-    18px 26px 50px -8px rgba(0, 0, 0, 0.58);
+    4px 4px 12px rgba(0, 0, 0, 0.32),
+    10px 14px 28px -4px rgba(0, 0, 0, 0.48),
+    16px 24px 46px -8px rgba(0, 0, 0, 0.55);
   overflow: visible;
   will-change: transform;
   backface-visibility: hidden;
@@ -736,7 +734,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: var(--radius-md);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.16) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.14) 100%);
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.3s ease;
@@ -745,7 +743,7 @@ body {
 
 /* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */
 .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: perspective(650px) rotateY(0deg) scale(1.02);
+  transform: perspective(1000px) rotateY(0deg) scale(1.02);
   filter: brightness(1) contrast(1);
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.18),
@@ -761,20 +759,20 @@ body {
 
 /* User-controlled Corridor Orientation: Left Tilt */
 .sm-corridor-wrapper.orient-left .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: perspective(650px) rotateY(-18deg) scale(0.93);
+  transform: perspective(1000px) rotateY(-13deg) scale(0.95);
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.08),
-    -5px 4px 12px rgba(0, 0, 0, 0.32),
-    -12px 14px 30px -4px rgba(0, 0, 0, 0.5),
-    -18px 26px 50px -8px rgba(0, 0, 0, 0.58);
+    -4px 4px 12px rgba(0, 0, 0, 0.32),
+    -10px 14px 28px -4px rgba(0, 0, 0, 0.48),
+    -16px 24px 46px -8px rgba(0, 0, 0, 0.55);
 }
 
 .sm-corridor-wrapper.orient-left .sm-stages-list .sm-stage-group .sm-card-wrapper::after {
-  background: linear-gradient(270deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.16) 100%);
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.14) 100%);
 }
 
 .sm-corridor-wrapper.orient-left .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: perspective(650px) rotateY(0deg) scale(1.02);
+  transform: perspective(1000px) rotateY(0deg) scale(1.02);
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.18),
     0 8px 18px rgba(0, 0, 0, 0.35),

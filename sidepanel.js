@@ -167,7 +167,9 @@ function render() {
     );
   }
 
-  tabCountEl.textContent = `${allTabs.length} 个标签`;
+  if (tabCountEl) {
+    tabCountEl.textContent = `${allTabs.length} 个标签`;
+  }
 
   if (displayTabs.length === 0) {
     if (pinnedStageSection) pinnedStageSection.style.display = 'none';
@@ -1018,52 +1020,65 @@ function setupEventListeners() {
   chrome.tabs.onAttached.addListener(() => scheduleRefresh());
 
   // New Tab button
-  btnNewTab.addEventListener('click', () => {
-    chrome.tabs.create({});
-  });
+  if (btnNewTab) {
+    btnNewTab.addEventListener('click', () => {
+      chrome.tabs.create({});
+    });
+  }
 
   // Toggle Search
-  btnSearchToggle.addEventListener('click', () => {
-    const isHidden = searchBar.style.display === 'none';
-    searchBar.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden) {
-      searchInput.focus();
-    } else {
-      searchQuery = '';
-      searchInput.value = '';
-      searchClear.style.display = 'none';
-      render();
-    }
-  });
+  if (btnSearchToggle) {
+    btnSearchToggle.addEventListener('click', () => {
+      if (!searchBar) return;
+      const isHidden = searchBar.style.display === 'none';
+      searchBar.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden && searchInput) {
+        searchInput.focus();
+      } else {
+        searchQuery = '';
+        if (searchInput) searchInput.value = '';
+        if (searchClear) searchClear.style.display = 'none';
+        render();
+      }
+    });
+  }
 
   // Search input handler
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    searchClear.style.display = searchQuery ? 'block' : 'none';
-    render();
-  });
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      if (searchClear) searchClear.style.display = searchQuery ? 'block' : 'none';
+      render();
+    });
+  }
 
-  searchClear.addEventListener('click', () => {
-    searchQuery = '';
-    searchInput.value = '';
-    searchClear.style.display = 'none';
-    render();
-    searchInput.focus();
-  });
+  if (searchClear) {
+    searchClear.addEventListener('click', () => {
+      searchQuery = '';
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      searchClear.style.display = 'none';
+      render();
+    });
+  }
 
   // Global search shortcut (Ctrl+K / Cmd+K) and Escape
   window.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      btnSearchToggle.click();
+      if (btnSearchToggle) {
+        e.preventDefault();
+        btnSearchToggle.click();
+      }
     } else if (e.key === 'Escape') {
-      if (searchBar.style.display !== 'none') {
+      if (searchBar && searchBar.style.display !== 'none') {
         searchBar.style.display = 'none';
         searchQuery = '';
-        searchInput.value = '';
+        if (searchInput) searchInput.value = '';
         render();
       }
-      if (logsDrawer.style.display !== 'none') {
+      if (logsDrawer && logsDrawer.style.display !== 'none') {
         logsDrawer.style.display = 'none';
       }
     }
@@ -1084,13 +1099,15 @@ function setupEventListeners() {
  */
 function setupDiagnosticDrawer() {
   // Toggle Drawer
-  btnLogsToggle.addEventListener('click', () => {
-    const isHidden = logsDrawer.style.display === 'none';
-    logsDrawer.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden) {
-      renderLogEntries();
-    }
-  });
+  if (btnLogsToggle) {
+    btnLogsToggle.addEventListener('click', () => {
+      const isHidden = logsDrawer.style.display === 'none';
+      logsDrawer.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden) {
+        renderLogEntries();
+      }
+    });
+  }
 
   // Close Drawer
   btnCloseLogs.addEventListener('click', () => {
@@ -1915,6 +1932,10 @@ function applyMinimapPosition(pos) {
   localStorage.setItem('sm_minimap_position', pos);
   if (bodyWrapper) {
     bodyWrapper.classList.toggle('minimap-left', pos === 'left');
+  }
+  const bottomBar = document.getElementById('bottom-bar');
+  if (bottomBar) {
+    bottomBar.classList.toggle('minimap-left', pos === 'left');
   }
   if (btnMinimapPos) {
     btnMinimapPos.title = pos === 'left'

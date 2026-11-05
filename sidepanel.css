@@ -19,7 +19,7 @@
   --radius-lg: 14px;
   --radius-md: 10px;
   --radius-sm: 6px;
-  --card-aspect: 16 / 10;
+  --card-aspect: 16 / 9;
   --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -240,12 +240,13 @@ body {
 
 /* ================= Section Labels ================= */
 .sm-section-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
-  margin: 12px 14px 6px;
+  margin: 6px 6px 4px 6px;
+  opacity: 0.75;
 }
 
 /* ================= Stage Corridor & Body Layout ================= */
@@ -264,9 +265,9 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 14px 24px 14px;
-  perspective: 1000px;
-  perspective-origin: left center;
+  padding: 6px 12px 16px 12px;
+  perspective: 900px;
+  perspective-origin: center center;
   /* Instant 1:1 scroll responsiveness without frame-fighting animation lag */
   scroll-behavior: auto;
 }
@@ -534,8 +535,10 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px 6px 4px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%);
+  padding: 4px 6px;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -548,6 +551,7 @@ body {
   border-radius: 2px;
   flex-shrink: 0;
   object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
 
 .sm-pinned-name {
@@ -557,7 +561,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  background: transparent !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
 .sm-pinned-card.is-discarded {
@@ -573,7 +578,7 @@ body {
 /* ================= Stage Group (Container for 1 or more tabs) ================= */
 .sm-stage-group {
   position: relative;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   width: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
@@ -585,7 +590,7 @@ body {
 .sm-stage-group.is-active-bar {
   perspective: none !important;
   transform: none !important;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   width: 100%;
   cursor: pointer;
 }
@@ -594,11 +599,12 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
+  height: 32px;
   border-radius: var(--radius-md);
   background: linear-gradient(90deg, rgba(0, 122, 255, 0.16) 0%, rgba(0, 122, 255, 0.04) 100%), var(--bg-card);
   border: 1px solid var(--border-active);
-  box-shadow: 0 0 14px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 12px var(--accent-glow), 0 2px 6px rgba(0, 0, 0, 0.25);
   position: relative;
   transition: all 0.2s ease;
   overflow: hidden;
@@ -607,7 +613,7 @@ body {
 .sm-active-bar:hover {
   background: linear-gradient(90deg, rgba(0, 122, 255, 0.22) 0%, rgba(0, 122, 255, 0.08) 100%), var(--bg-card-hover);
   border-color: rgba(0, 122, 255, 0.85);
-  box-shadow: 0 0 18px rgba(0, 122, 255, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 16px rgba(0, 122, 255, 0.35), 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .sm-active-indicator {
@@ -673,25 +679,25 @@ body {
 
 /* ================= Inactive Stage 3D Perspective Card ================= */
 .sm-stages-list .sm-stage-group {
-  perspective: 1000px;
-  transform-origin: 15% center;
+  perspective: 900px;
+  transform-origin: center center;
   width: 100%;
 }
 
 .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: rotateY(16deg) rotateX(1deg) scale(0.91);
-  transform-origin: left center;
-  transition: transform 0.32s var(--spring-easing), box-shadow 0.32s ease, filter 0.25s ease;
+  transform: rotateY(10deg) scale(0.95);
+  transform-origin: center center;
+  transition: transform 0.28s var(--spring-easing), box-shadow 0.28s ease, filter 0.25s ease;
   filter: brightness(0.92) contrast(1.02);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: visible;
 }
 
 /* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */
 .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: rotateY(0deg) rotateX(0deg) scale(1);
+  transform: rotateY(0deg) scale(1.0);
   filter: brightness(1) contrast(1);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
   z-index: 5;
 }
 
@@ -726,9 +732,9 @@ body {
   position: relative;
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  border-radius: var(--radius-md);
+  overflow: visible;
+  box-shadow: none;
   transition: all 0.25s var(--spring-easing);
   z-index: 3;
 }
@@ -737,34 +743,35 @@ body {
   background: transparent;
 }
 
-/* Card Header (Mac Frosted Titlebar style, blends cleanly with window) */
+/* Card Header (Pure Transparent, No Background Box) */
 .sm-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 6px 4px 6px;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
   font-size: 11.5px;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sm-card-info {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
 
 .sm-card-favicon {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   border-radius: 3px;
   flex-shrink: 0;
   object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
 }
 
 .sm-card-title {
@@ -772,7 +779,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
+  font-size: 11.5px;
   color: var(--text-primary);
+  background: transparent !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
 .sm-card-controls {
@@ -831,12 +841,14 @@ body {
   position: relative;
   width: 100%;
   aspect-ratio: var(--card-aspect);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .sm-card-preview img {
@@ -846,8 +858,7 @@ body {
   object-position: top left;
   display: block;
   image-rendering: -webkit-optimize-contrast;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
+  border-radius: var(--radius-md);
 }
 
 /* Fallback card placeholder when no screenshot exists yet */
@@ -921,19 +932,19 @@ body {
 }
 
 .sm-body-wrapper.minimap-left .sm-corridor {
-  padding: 8px 14px 24px 14px;
-  perspective-origin: right center;
+  padding: 6px 12px 16px 12px;
+  perspective-origin: center center;
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: rotateY(-16deg) rotateX(1deg) scale(0.91);
-  transform-origin: right center;
-  box-shadow: 8px 12px 28px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+  transform: rotateY(-10deg) scale(0.95);
+  transform-origin: center center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: rotateY(0deg) rotateX(0deg) scale(1);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  transform: rotateY(0deg) scale(1.0);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
 }
 
 .sm-body-wrapper.minimap-left .sm-minimap-popover {
@@ -1529,6 +1540,95 @@ body.is-minimap-dragging {
   }
   .sm-ctx-separator {
     background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ================= Bottom Bar (Directory / Minimap Toggle Dock) ================= */
+.sm-bottom-bar {
+  flex-shrink: 0;
+  height: 36px;
+  background: rgba(45, 45, 45, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  z-index: 10;
+  transition: justify-content 0.2s ease;
+}
+
+.sm-bottom-bar.minimap-left {
+  justify-content: flex-start;
+}
+
+@media (prefers-color-scheme: light) {
+  .sm-bottom-bar {
+    background: rgba(245, 245, 247, 0.9);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+}
+
+.sm-bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.sm-bottom-btn svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: transform 0.18s ease;
+}
+
+.sm-bottom-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.sm-bottom-btn:hover svg {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.sm-bottom-btn:active {
+  transform: scale(0.96);
+}
+
+.sm-bottom-btn.is-active {
+  background: rgba(0, 122, 255, 0.18);
+  border-color: rgba(0, 122, 255, 0.45);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: light) {
+  .sm-bottom-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #444444;
+  }
+  .sm-bottom-btn:hover {
+    background: rgba(0, 0, 0, 0.09);
+    color: #000000;
+  }
+  .sm-bottom-btn.is-active {
+    background: rgba(0, 122, 255, 0.14);
+    border-color: rgba(0, 122, 255, 0.5);
+    color: var(--accent-color);
   }
 }
 

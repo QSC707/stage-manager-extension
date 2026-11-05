@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage Manager</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="sm-container">
+    <!-- Top Header & Search Bar -->
+    <header class="sm-header">
+      <div class="sm-header-top">
+        <div class="sm-brand">
+          <div class="sm-status-dot"></div>
+          <span class="sm-title">台前调度</span>
+          <span class="sm-tab-count" id="tab-count">0 个标签</span>
+        </div>
+        <div class="sm-actions">
+          <button class="sm-btn-icon" id="btn-new-tab" title="新建标签页 (Ctrl+T)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <button class="sm-btn-icon" id="btn-search-toggle" title="搜索标签 (Ctrl+K)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+          <button class="sm-btn-icon" id="btn-minimap-toggle" title="切换右侧缩略图目录 (VS Code Minimap 风格)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="3" x2="16" y2="21"></line>
+              <line x1="19" y1="7" x2="18" y2="7"></line>
+              <line x1="19" y1="11" x2="18" y2="11"></line>
+              <line x1="19" y1="15" x2="18" y2="15"></line>
+            </svg>
+          </button>
+          <button class="sm-btn-icon" id="btn-logs-toggle" title="实时诊断日志">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Search Bar (Collapsible) -->
+      <div class="sm-search-bar" id="search-bar" style="display: none;">
+        <svg class="sm-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="search-input" placeholder="搜索网页或域名... (Esc 退出)" autocomplete="off">
+        <button id="search-clear" class="sm-search-clear" style="display: none;">&times;</button>
+      </div>
+    </header>
+
+    <!-- Pinned Tabs Module (Permanently Fixed at Top, Adaptive Square Grid) -->
+    <section class="sm-pinned-section" id="pinned-stage-section" style="display: none;">
+      <div class="sm-section-header">
+        <span class="sm-section-label sm-pinned-title">
+          <svg class="sm-pin-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="17" x2="12" y2="22"></line>
+            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"></path>
+          </svg>
+          固定标签页
+        </span>
+        <span class="sm-pinned-badge" id="pinned-count">0</span>
+      </div>
+      <div class="sm-pinned-grid" id="pinned-grid">
+        <!-- Adaptive Square Thumbnails rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Stage Manager Main Body: Corridor + VS Code Style Minimap -->
+    <div class="sm-body-wrapper" id="body-wrapper">
+      <!-- Stage Manager Strip Corridor -->
+      <main class="sm-corridor" id="stage-corridor">
+        <!-- Inactive Stage Corridor -->
+        <div class="sm-section-label" id="inactive-section-label">调度长廊 (Stage Strip)</div>
+        <div class="sm-stages-list" id="stages-list">
+          <!-- Rendered dynamically with 3D thumbnails -->
+        </div>
+      </main>
+
+      <!-- VS Code Style Thumbnail Minimap Rail -->
+      <aside class="sm-minimap" id="sm-minimap">
+        <div class="sm-minimap-header" title="缩略图总览目录 (拖拽或点击可快速漫游，右键可切换左右位置)">
+          <span class="sm-minimap-label">MAP</span>
+          <button class="sm-minimap-pos-btn" id="btn-minimap-pos" title="切换目录位置 (左侧 / 右侧)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="7 16 3 12 7 8"></polyline>
+              <polyline points="17 8 21 12 17 16"></polyline>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="sm-minimap-scroll-container" id="minimap-scroll-container">
+          <div class="sm-minimap-track" id="minimap-track">
+            <!-- Micro cards rendered dynamically -->
+          </div>
+          <div class="sm-minimap-slider" id="minimap-slider" title="当前视口滑块 (可按住拖拽滚动)"></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Minimap Hover Glance Popover (VS Code Style) -->
+    <div class="sm-minimap-popover" id="minimap-popover" style="display: none;">
+      <div class="sm-popover-header">
+        <img class="sm-popover-favicon" id="popover-favicon" src="" alt="">
+        <span class="sm-popover-title" id="popover-title"></span>
+      </div>
+      <div class="sm-popover-preview" id="popover-preview">
+        <!-- Live preview or placeholder rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="sm-empty" id="empty-state" style="display: none;">
+      <div class="sm-empty-icon">🪟</div>
+      <div class="sm-empty-title">没有找到匹配的标签</div>
+      <div class="sm-empty-desc">尝试换个关键词，或按 Enter 在新标签页打开搜索</div>
+    </div>
+
+    <!-- Diagnostic Logs Drawer (Collapsible) -->
+    <div class="sm-logs-drawer" id="logs-drawer" style="display: none;">
+      <div class="sm-logs-header">
+        <div class="sm-logs-title">
+          <span class="sm-logs-dot"></span>
+          <span>运行诊断日志</span>
+          <span class="sm-logs-count" id="logs-count">0</span>
+        </div>
+        <div class="sm-logs-tools">
+          <button class="sm-logs-btn" id="btn-copy-logs" title="一键复制全部日志">复制</button>
+          <button class="sm-logs-btn" id="btn-clear-logs" title="清空日志">清空</button>
+          <button class="sm-logs-btn" id="btn-clean-db" title="清理过期的缩略图缓存">清理缓存</button>
+          <button class="sm-logs-close" id="btn-close-logs">&times;</button>
+        </div>
+      </div>
+      <div class="sm-logs-content" id="logs-content">
+        <!-- Real-time log entries -->
+      </div>
+    </div>
+  </div>
+
+  <script src="logger.js"></script>
+  <script src="storage.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

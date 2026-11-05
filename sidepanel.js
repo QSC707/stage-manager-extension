@@ -156,6 +156,10 @@ function scheduleRefresh() {
  */
 async function refreshTabs() {
   try {
+    if (!currentWindowId) {
+      const win = await chrome.windows.getCurrent();
+      currentWindowId = win.id;
+    }
     allTabs = await chrome.tabs.query({ windowId: currentWindowId });
     const activeTab = allTabs.find(t => t.active);
     activeTabId = activeTab ? activeTab.id : (allTabs[0] ? allTabs[0].id : null);
@@ -170,120 +174,121 @@ async function refreshTabs() {
  * Main Render function with Keyed DOM Reconciliation (Zero-Flicker)
  */
 function render() {
-  const displayTabs = allTabs;
+  try {
+    const displayTabs = allTabs;
 
-  if (displayTabs.length === 0) {
-    if (pinnedStageSection) {
-      pinnedStageSection.style.display = 'none';
-      pinnedStageSection.classList.add('has-no-pinned');
+    if (displayTabs.length === 0) {
+      if (pinnedStageSection) {
+        pinnedStageSection.style.display = 'none';
+        pinnedStageSection.classList.add('has-no-pinned');
+      }
+      const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
+      if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
+      if (pinnedGrid) {
+        pinnedGrid.style.display = 'none';
+        pinnedGrid.innerHTML = '';
+      }
+      stagesList.innerHTML = '';
+      inactiveSectionLabel.style.display = 'none';
+      emptyState.style.display = 'flex';
+      if (minimapTrack) minimapTrack.innerHTML = '';
+      if (minimapSlider) minimapSlider.style.display = 'none';
+      hideMinimapPopover();
+      return;
     }
+
+    emptyState.style.display = 'none';
+
+    // Partition tabs into Pinned and Unpinned
+    const pinnedTabs = displayTabs.filter(t => t.pinned);
+    const unpinnedTabs = displayTabs.filter(t => !t.pinned);
+
+    // 1. Render Top Pinned Tabs Module (Constant adaptive square grid)
     const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
-    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
-    if (pinnedGrid) {
-      pinnedGrid.style.display = 'none';
-      pinnedGrid.innerHTML = '';
+    if (pinnedTabs.length > 0) {
+      if (pinnedStageSection) {
+        pinnedStageSection.style.display = 'block';
+        pinnedStageSection.classList.remove('has-no-pinned');
+      }
+      if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'flex';
+      if (pinnedGrid) pinnedGrid.style.display = 'grid';
+      if (pinnedCountEl) pinnedCountEl.textContent = pinnedTabs.length;
+      renderPinnedGrid(pinnedTabs);
+    } else {
+      if (pinnedStageSection) {
+        pinnedStageSection.style.display = 'none';
+        pinnedStageSection.classList.add('has-no-pinned');
+      }
+      if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
+      if (pinnedGrid) {
+        pinnedGrid.style.display = 'none';
+        pinnedGrid.innerHTML = '';
+      }
     }
-    stagesList.innerHTML = '';
-    inactiveSectionLabel.style.display = 'none';
-    emptyState.style.display = 'flex';
-    if (minimapTrack) minimapTrack.innerHTML = '';
-    if (minimapSlider) minimapSlider.style.display = 'none';
-    hideMinimapPopover();
-    return;
-  }
 
-  emptyState.style.display = 'none';
+    // 2. Render Unpinned Tabs in Stage Corridor
+    // Active tab renders as a sleek horizontal title bar (WITHOUT thumbnail)
+    // Inactive tabs render as 3D stage thumbnail cards
+    const corridorTabs = unpinnedTabs;
 
-  // Partition tabs into Pinned and Unpinned
-  const pinnedTabs = displayTabs.filter(t => t.pinned);
-  const unpinnedTabs = displayTabs.filter(t => !t.pinned);
+    if (corridorTabs.length > 0) {
+      inactiveSectionLabel.style.display = 'block';
+      inactiveSectionLabel.textContent = `调度长廊 (${corridorTabs.length})`;
 
-  // 1. Render Top Pinned Tabs Module (Constant adaptive square grid)
-  const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
-  if (pinnedTabs.length > 0) {
-    if (pinnedStageSection) {
-      pinnedStageSection.style.display = 'block';
-      pinnedStageSection.classList.remove('has-no-pinned');
-    }
-    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'flex';
-    if (pinnedGrid) pinnedGrid.style.display = 'grid';
-    if (pinnedCountEl) pinnedCountEl.textContent = pinnedTabs.length;
-    renderPinnedGrid(pinnedTabs);
-  } else {
-    if (pinnedStageSection) {
-      pinnedStageSection.style.display = 'none';
-      pinnedStageSection.classList.add('has-no-pinned');
-    }
-    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
-    if (pinnedGrid) {
-      pinnedGrid.style.display = 'none';
-      pinnedGrid.innerHTML = '';
-    }
-  }
+      // Map existing cards by tabId
+      const existingCards = new Map();
+      stagesList.querySelectorAll('.sm-stage-group').forEach(el => {
+        existingCards.set(Number(el.dataset.tabId), el);
+      });
 
-  // 2. Render Unpinned Tabs in Stage Corridor
-  // Active tab renders as a sleek horizontal title bar (WITHOUT thumbnail)
-  // Inactive tabs render as 3D stage thumbnail cards
-  const corridorTabs = unpinnedTabs;
+      const fragment = document.createDocumentFragment();
 
-  if (corridorTabs.length > 0) {
-    inactiveSectionLabel.style.display = 'block';
-    inactiveSectionLabel.textContent = `调度长廊 (${corridorTabs.length})`;
+      for (const tab of corridorTabs) {
+        const isActive = tab.id === activeTabId;
+        const expectedType = isActive ? 'active-bar' : 'thumbnail-card';
+        let cardEl = existingCards.get(tab.id);
 
-    // Map existing cards by tabId
-    const existingCards = new Map();
-    stagesList.querySelectorAll('.sm-stage-group').forEach(el => {
-      existingCards.set(Number(el.dataset.tabId), el);
-    });
-
-    let currentChild = stagesList.firstElementChild;
-
-    for (const tab of corridorTabs) {
-      const isActive = tab.id === activeTabId;
-      const expectedType = isActive ? 'active-bar' : 'thumbnail-card';
-      let cardEl = existingCards.get(tab.id);
-
-      if (cardEl && cardEl.dataset.cardType === expectedType) {
-        // Reuse existing node of same type!
-        existingCards.delete(tab.id);
-        if (isActive) {
-          updateActiveBarCard(cardEl, tab);
-        } else {
-          updateInactiveTabCard(cardEl, tab);
-        }
-      } else {
-        // If type changed (e.g. was thumbnail, now became active horizontal bar; or vice versa)
-        if (cardEl) {
+        if (cardEl && cardEl.dataset.cardType === expectedType) {
+          // Reuse existing node of same type!
           existingCards.delete(tab.id);
-          cardEl.remove();
-        }
-        if (isActive) {
-          cardEl = createActiveBarCard(tab);
+          if (isActive) {
+            updateActiveBarCard(cardEl, tab);
+          } else {
+            updateInactiveTabCard(cardEl, tab);
+          }
         } else {
-          cardEl = createInactiveTabCard(tab);
+          // If type changed (e.g. was thumbnail, now became active horizontal bar; or vice versa)
+          if (cardEl) {
+            existingCards.delete(tab.id);
+            cardEl.remove();
+          }
+          if (isActive) {
+            cardEl = createActiveBarCard(tab);
+          } else {
+            cardEl = createInactiveTabCard(tab);
+          }
         }
+        fragment.appendChild(cardEl);
       }
 
-      // High-performance keyed position alignment: only touch DOM if order actually changed!
-      if (currentChild !== cardEl) {
-        stagesList.insertBefore(cardEl, currentChild);
-      } else {
-        currentChild = currentChild.nextElementSibling;
+      // Remove stale cards that no longer exist
+      for (const [staleId, staleEl] of existingCards) {
+        staleEl.remove();
+        thumbnailCache.delete(staleId);
       }
+
+      // Append fragment: reorders smoothly without reloading images or flashing
+      stagesList.appendChild(fragment);
+    } else {
+      inactiveSectionLabel.style.display = 'none';
+      stagesList.innerHTML = '';
     }
 
-    // Remove stale cards that no longer exist
-    for (const [staleId, staleEl] of existingCards) {
-      staleEl.remove();
-      thumbnailCache.delete(staleId);
-    }
-  } else {
-    inactiveSectionLabel.style.display = 'none';
-    stagesList.innerHTML = '';
+    // 3. Render VS Code style Thumbnail Minimap Rail for Corridor
+    renderMinimap(corridorTabs);
+  } catch (renderErr) {
+    Logger.error('SidePanel', 'Render error:', renderErr);
   }
-
-  // 3. Render VS Code style Thumbnail Minimap Rail for Corridor
-  renderMinimap(corridorTabs);
 }
 
 /**
@@ -296,7 +301,7 @@ function renderPinnedGrid(pinnedTabs) {
     existingCards.set(Number(el.dataset.tabId), el);
   });
 
-  let currentChild = pinnedGrid.firstElementChild;
+  const fragment = document.createDocumentFragment();
 
   for (const tab of pinnedTabs) {
     let cardEl;
@@ -307,18 +312,15 @@ function renderPinnedGrid(pinnedTabs) {
     } else {
       cardEl = createPinnedCard(tab);
     }
-
-    if (currentChild !== cardEl) {
-      pinnedGrid.insertBefore(cardEl, currentChild);
-    } else {
-      currentChild = currentChild.nextElementSibling;
-    }
+    fragment.appendChild(cardEl);
   }
 
   // Remove stale cards that no longer exist
   for (const [staleId, staleEl] of existingCards) {
     staleEl.remove();
   }
+
+  pinnedGrid.appendChild(fragment);
 }
 
 /**
@@ -1616,7 +1618,7 @@ function renderMinimap(corridorTabs = []) {
     existingMiniCards.set(Number(el.dataset.tabId), el);
   });
 
-  let currentChild = minimapTrack.firstElementChild;
+  const fragment = document.createDocumentFragment();
 
   // Render Corridor Tabs
   if (corridorTabs && corridorTabs.length > 0) {
@@ -1643,12 +1645,7 @@ function renderMinimap(corridorTabs = []) {
           miniCard = createMiniCard(tab, false);
         }
       }
-
-      if (currentChild !== miniCard) {
-        minimapTrack.insertBefore(miniCard, currentChild);
-      } else {
-        currentChild = currentChild.nextElementSibling;
-      }
+      fragment.appendChild(miniCard);
     }
   }
 
@@ -1656,6 +1653,8 @@ function renderMinimap(corridorTabs = []) {
   for (const [staleId, staleEl] of existingMiniCards) {
     staleEl.remove();
   }
+
+  minimapTrack.appendChild(fragment);
 
   // Synchronize slider position & size
   scheduleMinimapSliderUpdate();

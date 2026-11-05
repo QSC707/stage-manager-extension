@@ -49,12 +49,11 @@
     - 🔇 **将网站静音 / 取消网站静音**：一键控制媒体音量。
 
 - 🛡️ **极速高能性能架构与超清 Retina 离线缓存**
-  - **按键就地 DOM 协调 (In-Place Keyed Reconciliation)**：长廊、固定区与大纲目录全面升级为微内核就地对齐算法。标签顺序不变时直接复用现有 DOM 节点，零整体重排（0 Reflow），零节点重插，彻底消除频繁切换标签时的主线程卡顿。
-  - **后台截屏节流门禁 (8s Cooldown Throttle)**：在标签页来回快速切换时智能启用 8 秒捕获冷却，杜绝重复捕获与高频 WebP 压缩，大幅降低后台 Service Worker 的 GPU 与 CPU 占用，延长笔记本电池续航。
+  - **原子级文档片段重排与容灾隔离 (Atomic DocumentFragment Architecture)**：采用原子级 `DocumentFragment` 结合 DOM 节点实例智能复用架构，在卡片类型动态切换（3D 缩略图 ⇄ 极简横条）时保证 100% 稳定的无缝迁移，彻底杜绝指针脱钩或 `DOMException` 异常。全局渲染函数配备完备的容灾隔离与日志捕获，卡片永不失踪。
+  - **即时响应与双重防抖截图管道 (Instant Responsive Capture Pipeline)**：移除过度节流的冷却门禁，配合 450ms 显存缓冲与 350ms Hydration 延迟调度，在标签页切换瞬间即时触发精准截图，彻底消除缩略图空白或不显示的问题。
   - **GPU 硬件合成层独立升格**：为所有 3D 缩略图卡片注入 `will-change: transform` 与硬件背面剔除，在 120Hz 高刷屏与密集滚动时确保丝滑满帧。
   - **防死循环安全图标容灾**：加入防死循环单次容灾机制与离线 inline SVG 兜底，彻底杜绝无网环境下图标重试风暴。
   - **超清 1024px 高清重采样**：升级至 1024px 宽度与 WebP 85% 高保真编码，在 2K/4K/Retina 高分屏下网页文字与排版清晰锐利，告别模糊。
-  - **450ms 显存缓冲交换门禁**：彻底杜绝快速切换时截取到上一标签页画面的错位与黑帧现象。
   - **IndexedDB 持久化**：毫秒级离线提取缩略图，结合严格 URL 契约防脏读机制。
   - **实时运行诊断中心**：快捷键 `Ctrl + Shift + L` 即可呼出全景诊断日志，支持一键导出与缓存秒级清理。
 
@@ -63,7 +62,7 @@
 ## 🚀 安装与使用方法
 
 ### 方式一：下载 Release 压缩包（最便捷）
-1. 在本仓库右侧 **[Releases](../../releases)** 中下载最新的 **`stage-manager-extension-v1.2.9.zip`**。
+1. 在本仓库右侧 **[Releases](../../releases)** 中下载最新的 **`stage-manager-extension-v1.3.0.zip`**。
 2. 解压到本地任意目录（例如文件夹 `stage-manager-extension`）。
 3. 打开浏览器扩展管理页面：
    - **Chrome 用户**：在地址栏输入 `chrome://extensions/`

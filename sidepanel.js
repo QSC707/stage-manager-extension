@@ -172,8 +172,13 @@ function render() {
   }
 
   if (displayTabs.length === 0) {
-    if (pinnedStageSection) pinnedStageSection.style.display = 'none';
-    if (pinnedGrid) pinnedGrid.innerHTML = '';
+    if (pinnedStageSection) pinnedStageSection.classList.add('has-no-pinned');
+    const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
+    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
+    if (pinnedGrid) {
+      pinnedGrid.style.display = 'none';
+      pinnedGrid.innerHTML = '';
+    }
     stagesList.innerHTML = '';
     inactiveSectionLabel.style.display = 'none';
     emptyState.style.display = 'flex';
@@ -190,13 +195,20 @@ function render() {
   const unpinnedTabs = displayTabs.filter(t => !t.pinned);
 
   // 1. Render Top Pinned Tabs Module (Constant adaptive square grid)
+  const pinnedTitleWrap = document.getElementById('pinned-title-wrap');
   if (pinnedTabs.length > 0) {
-    pinnedStageSection.style.display = 'block';
-    pinnedCountEl.textContent = pinnedTabs.length;
+    if (pinnedStageSection) pinnedStageSection.classList.remove('has-no-pinned');
+    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'flex';
+    if (pinnedGrid) pinnedGrid.style.display = 'grid';
+    if (pinnedCountEl) pinnedCountEl.textContent = pinnedTabs.length;
     renderPinnedGrid(pinnedTabs);
   } else {
-    pinnedStageSection.style.display = 'none';
-    pinnedGrid.innerHTML = '';
+    if (pinnedStageSection) pinnedStageSection.classList.add('has-no-pinned');
+    if (pinnedTitleWrap) pinnedTitleWrap.style.display = 'none';
+    if (pinnedGrid) {
+      pinnedGrid.style.display = 'none';
+      pinnedGrid.innerHTML = '';
+    }
   }
 
   // 2. Render Unpinned Tabs in Stage Corridor
@@ -1933,9 +1945,8 @@ function applyMinimapPosition(pos) {
   if (bodyWrapper) {
     bodyWrapper.classList.toggle('minimap-left', pos === 'left');
   }
-  const bottomBar = document.getElementById('bottom-bar');
-  if (bottomBar) {
-    bottomBar.classList.toggle('minimap-left', pos === 'left');
+  if (pinnedStageSection) {
+    pinnedStageSection.classList.toggle('minimap-left', pos === 'left');
   }
   if (btnMinimapPos) {
     btnMinimapPos.title = pos === 'left'

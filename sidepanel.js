@@ -12,6 +12,24 @@ let refreshScheduled = false;
 // In-Memory Thumbnail Cache: tabId -> { url: string, dataUrl: string }
 const thumbnailCache = new Map();
 
+// Offline fallback inline SVG favicon
+const DEFAULT_FAVICON_SVG = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239aa0a6"><circle cx="12" cy="12" r="10"/></svg>';
+
+/**
+ * Loop-proof safe favicon error handler
+ * Attempts network fallback once, then falls back to inline SVG without looping
+ */
+function handleFaviconError(imgEl, url) {
+  if (!imgEl || imgEl.__hasFallbackFailed) return;
+  if (!imgEl.__hasRetriedFallback) {
+    imgEl.__hasRetriedFallback = true;
+    imgEl.src = getFallbackFavicon(url);
+  } else {
+    imgEl.__hasFallbackFailed = true;
+    imgEl.src = DEFAULT_FAVICON_SVG;
+  }
+}
+
 // DOM Elements
 const pinnedStageSection = document.getElementById('pinned-stage-section');
 const pinnedGrid = document.getElementById('pinned-grid');
@@ -218,7 +236,7 @@ function render() {
       existingCards.set(Number(el.dataset.tabId), el);
     });
 
-    const fragment = document.createDocumentFragment();
+    let currentChild = stagesList.firstElementChild;
 
     for (const tab of corridorTabs) {
       const isActive = tab.id === activeTabId;
@@ -245,7 +263,13 @@ function render() {
           cardEl = createInactiveTabCard(tab);
         }
       }
-      fragment.appendChild(cardEl);
+
+      // High-performance keyed position alignment: only touch DOM if order actually changed!
+      if (currentChild !== cardEl) {
+        stagesList.insertBefore(cardEl, currentChild);
+      } else {
+        currentChild = currentChild.nextElementSibling;
+      }
     }
 
     // Remove stale cards that no longer exist
@@ -253,9 +277,6 @@ function render() {
       staleEl.remove();
       thumbnailCache.delete(staleId);
     }
-
-    // Append fragment: reorders smoothly without reloading images or flashing
-    stagesList.appendChild(fragment);
   } else {
     inactiveSectionLabel.style.display = 'none';
     stagesList.innerHTML = '';
@@ -275,7 +296,7 @@ function renderPinnedGrid(pinnedTabs) {
     existingCards.set(Number(el.dataset.tabId), el);
   });
 
-  const fragment = document.createDocumentFragment();
+  let currentChild = pinnedGrid.firstElementChild;
 
   for (const tab of pinnedTabs) {
     let cardEl;
@@ -286,15 +307,18 @@ function renderPinnedGrid(pinnedTabs) {
     } else {
       cardEl = createPinnedCard(tab);
     }
-    fragment.appendChild(cardEl);
+
+    if (currentChild !== cardEl) {
+      pinnedGrid.insertBefore(cardEl, currentChild);
+    } else {
+      currentChild = currentChild.nextElementSibling;
+    }
   }
 
   // Remove stale cards that no longer exist
   for (const [staleId, staleEl] of existingCards) {
     staleEl.remove();
   }
-
-  pinnedGrid.appendChild(fragment);
 }
 
 /**
@@ -321,7 +345,7 @@ function createPinnedCard(tab) {
   const fav = document.createElement('img');
   fav.className = 'sm-pinned-fav';
   fav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  fav.onerror = () => { fav.src = getFallbackFavicon(tab.url); };
+  fav.onerror = () => handleFaviconError(fav, tab.url);
 
   const name = document.createElement('span');
   name.className = 'sm-pinned-name';
@@ -337,7 +361,7 @@ function createPinnedCard(tab) {
   const activeFav = document.createElement('img');
   activeFav.className = 'sm-pinned-active-fav';
   activeFav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  activeFav.onerror = () => { activeFav.src = getFallbackFavicon(tab.url); };
+  activeFav.onerror = () => handleFaviconError(activeFav, tab.url);
   activeContent.appendChild(activeFav);
   card.appendChild(activeContent);
 
@@ -403,7 +427,7 @@ function updatePinnedCard(cardEl, tab) {
     }
     activeFav = document.createElement('img');
     activeFav.className = 'sm-pinned-active-fav';
-    activeFav.onerror = () => { activeFav.src = getFallbackFavicon(tab.url); };
+    activeFav.onerror = () => handleFaviconError(activeFav, tab.url);
     activeContent.appendChild(activeFav);
   }
   if (activeFav.src !== expectedFav) {
@@ -537,7 +561,7 @@ function renderPinnedPlaceholder(previewEl, tab) {
   const fav = document.createElement('img');
   fav.className = 'sm-pinned-placeholder-fav';
   fav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  fav.onerror = () => { fav.src = getFallbackFavicon(tab.url); };
+  fav.onerror = () => handleFaviconError(fav, tab.url);
   ph.appendChild(fav);
   previewEl.appendChild(ph);
 }
@@ -565,7 +589,7 @@ function createActiveBarCard(tab) {
   const fav = document.createElement('img');
   fav.className = 'sm-active-fav';
   fav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  fav.onerror = () => { fav.src = getFallbackFavicon(tab.url); };
+  fav.onerror = () => handleFaviconError(fav, tab.url);
 
   // Title
   const title = document.createElement('span');
@@ -824,9 +848,7 @@ function createInactiveTabCard(tab) {
   const favicon = document.createElement('img');
   favicon.className = 'sm-card-favicon';
   favicon.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  favicon.onerror = () => {
-    favicon.src = getFallbackFavicon(tab.url);
-  };
+  favicon.onerror = () => handleFaviconError(favicon, tab.url);
 
   const title = document.createElement('span');
   title.className = 'sm-card-title';
@@ -1360,40 +1382,6 @@ function showToast(message, duration = 2600) {
 function setupContextMenuInteractions() {
   if (!tabContextMenu) return;
 
-  // 0. New Tab
-  const newTabBtn = document.getElementById('ctx-new-tab');
-  if (newTabBtn) {
-    newTabBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      hideContextMenu();
-      chrome.tabs.create({});
-    });
-  }
-
-  // 0.1 Reload Tab
-  const reloadTabBtn = document.getElementById('ctx-reload-tab');
-  if (reloadTabBtn) {
-    reloadTabBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!contextMenuTargetTab) return;
-      const targetTab = contextMenuTargetTab;
-      hideContextMenu();
-      chrome.tabs.reload(targetTab.id);
-    });
-  }
-
-  // 0.2 Duplicate Tab
-  const duplicateTabBtn = document.getElementById('ctx-duplicate-tab');
-  if (duplicateTabBtn) {
-    duplicateTabBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!contextMenuTargetTab) return;
-      const targetTab = contextMenuTargetTab;
-      hideContextMenu();
-      chrome.tabs.duplicate(targetTab.id);
-    });
-  }
-
   // 1. Browser Native Split Screen (Single-window side-by-side tab split view)
   const splitBtn = document.getElementById('ctx-split-screen');
   if (splitBtn) {
@@ -1628,7 +1616,7 @@ function renderMinimap(corridorTabs = []) {
     existingMiniCards.set(Number(el.dataset.tabId), el);
   });
 
-  const fragment = document.createDocumentFragment();
+  let currentChild = minimapTrack.firstElementChild;
 
   // Render Corridor Tabs
   if (corridorTabs && corridorTabs.length > 0) {
@@ -1655,7 +1643,12 @@ function renderMinimap(corridorTabs = []) {
           miniCard = createMiniCard(tab, false);
         }
       }
-      fragment.appendChild(miniCard);
+
+      if (currentChild !== miniCard) {
+        minimapTrack.insertBefore(miniCard, currentChild);
+      } else {
+        currentChild = currentChild.nextElementSibling;
+      }
     }
   }
 
@@ -1663,8 +1656,6 @@ function renderMinimap(corridorTabs = []) {
   for (const [staleId, staleEl] of existingMiniCards) {
     staleEl.remove();
   }
-
-  minimapTrack.appendChild(fragment);
 
   // Synchronize slider position & size
   scheduleMinimapSliderUpdate();
@@ -1692,7 +1683,7 @@ function createMiniActiveBar(tab) {
   const fav = document.createElement('img');
   fav.className = 'sm-mini-active-fav';
   fav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  fav.onerror = () => { fav.src = getFallbackFavicon(tab.url); };
+  fav.onerror = () => handleFaviconError(fav, tab.url);
 
   bar.appendChild(dot);
   bar.appendChild(fav);
@@ -1862,7 +1853,7 @@ function updateMiniCardContent(cardEl, tab) {
       const fav = document.createElement('img');
       fav.className = 'sm-mini-favicon';
       fav.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-      fav.onerror = () => { fav.src = getFallbackFavicon(tab.url); };
+      fav.onerror = () => handleFaviconError(fav, tab.url);
       placeholder.appendChild(fav);
       cardEl.appendChild(placeholder);
     } else {
@@ -1904,7 +1895,7 @@ function showMinimapPopover(tab, cardEl) {
 
   popoverTitle.textContent = tab.title || '新标签页';
   popoverFavicon.src = tab.favIconUrl || getFallbackFavicon(tab.url);
-  popoverFavicon.onerror = () => { popoverFavicon.src = getFallbackFavicon(tab.url); };
+  popoverFavicon.onerror = () => handleFaviconError(popoverFavicon, tab.url);
 
   const normUrl = normalizeUrl(tab.url);
   const cached = thumbnailCache.get(tab.id);

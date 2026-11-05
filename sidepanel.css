@@ -347,6 +347,9 @@ body {
   transition: transform 0.18s var(--spring-easing), border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   display: flex;
   flex-direction: column;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .sm-pinned-card:hover {
@@ -721,6 +724,9 @@ body {
     0 10px 24px -4px rgba(0, 0, 0, 0.45),
     0 20px 42px -8px rgba(0, 0, 0, 0.5);
   overflow: visible;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */

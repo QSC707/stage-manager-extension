@@ -19,6 +19,10 @@ chrome.runtime.onInstalled.addListener(() => {
 // Key: windowId -> { timer: setTimeout, tabId: number, trigger: string }
 const windowCaptureTimers = new Map();
 
+// Throttle record: tabId -> timestamp of last successful capture
+const tabLastCaptureTime = new Map();
+const TAB_CAPTURE_COOLDOWN_MS = 8000; // 8-second cooldown for onActivated switches
+
 /**
  * Schedule screenshot capture for a window's active tab
  * Cancels any existing capture in this window!
@@ -77,6 +81,14 @@ async function captureActiveTab(windowId, tabId, trigger = '') {
       return;
     }
 
+    // Performance Optimization: Skip redundant capture if recently captured on tab switch
+    if (trigger === 'onActivated') {
+      const lastTime = tabLastCaptureTime.get(tabId) || 0;
+      if (Date.now() - lastTime < TAB_CAPTURE_COOLDOWN_MS) {
+        return;
+      }
+    }
+
     const capturedUrl = tab.url;
     const targetWindowId = tab.windowId || windowId;
 
@@ -112,6 +124,7 @@ async function captureActiveTab(windowId, tabId, trigger = '') {
 
         // Save thumbnail into IndexedDB strictly bound to this URL
         await saveThumbnail(tabId, capturedUrl, compressedUrl);
+        tabLastCaptureTime.set(tabId, Date.now());
 
         Logger.capture('Capture', `成功更新高清缩略图: Tab ${tabId} [${trigger}]`, {
           title: tab.title,
@@ -199,6 +212,9 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 // Tab updated listener: capture shortly after page finishes loading
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    tabLastCaptureTime.delete(tabId);
+  }
   if (changeInfo.status === 'complete' && tab.active) {
     // 350ms delay lets client-side JS / React / Vue complete initial hydration
     scheduleCapture(tab.windowId, tabId, 350, 'onUpdated-complete');
@@ -207,6 +223,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Tab removed listener: clean up timers and stored thumbnails
 chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
+  tabLastCaptureTime.delete(tabId);
   if (windowCaptureTimers.has(removeInfo.windowId)) {
     const current = windowCaptureTimers.get(removeInfo.windowId);
     if (current.tabId === tabId) {

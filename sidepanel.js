@@ -7,7 +7,6 @@
 let allTabs = [];
 let activeTabId = null;
 let currentWindowId = null;
-let searchQuery = '';
 let refreshScheduled = false;
 
 // In-Memory Thumbnail Cache: tabId -> { url: string, dataUrl: string }
@@ -20,19 +19,12 @@ const pinnedCountEl = document.getElementById('pinned-count');
 const stagesList = document.getElementById('stages-list');
 const inactiveSectionLabel = document.getElementById('inactive-section-label');
 const emptyState = document.getElementById('empty-state');
-const tabCountEl = document.getElementById('tab-count');
-const btnNewTab = document.getElementById('btn-new-tab');
-const btnSearchToggle = document.getElementById('btn-search-toggle');
 const btnMinimapToggle = document.getElementById('btn-minimap-toggle');
 const btnCorridorPos = document.getElementById('btn-corridor-pos');
 const txtCorridorPos = document.getElementById('txt-corridor-pos');
-const btnLogsToggle = document.getElementById('btn-logs-toggle');
 const bodyWrapper = document.getElementById('body-wrapper');
 const corridorWrapper = document.getElementById('corridor-wrapper');
 const stageCorridor = document.getElementById('stage-corridor');
-const searchBar = document.getElementById('search-bar');
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
 const tabContextMenu = document.getElementById('tab-context-menu');
 let contextMenuTargetTab = null;
 
@@ -160,20 +152,7 @@ async function refreshTabs() {
  * Main Render function with Keyed DOM Reconciliation (Zero-Flicker)
  */
 function render() {
-  let displayTabs = allTabs;
-
-  // Apply search filter if query exists
-  if (searchQuery.trim()) {
-    const q = searchQuery.toLowerCase().trim();
-    displayTabs = allTabs.filter(t =>
-      (t.title && t.title.toLowerCase().includes(q)) ||
-      (t.url && t.url.toLowerCase().includes(q))
-    );
-  }
-
-  if (tabCountEl) {
-    tabCountEl.textContent = `${allTabs.length} 个标签`;
-  }
+  const displayTabs = allTabs;
 
   if (displayTabs.length === 0) {
     if (pinnedStageSection) {
@@ -1044,67 +1023,23 @@ function setupEventListeners() {
   chrome.tabs.onDetached.addListener(() => scheduleRefresh());
   chrome.tabs.onAttached.addListener(() => scheduleRefresh());
 
-  // New Tab button
-  if (btnNewTab) {
-    btnNewTab.addEventListener('click', () => {
-      chrome.tabs.create({});
-    });
-  }
-
-  // Toggle Search
-  if (btnSearchToggle) {
-    btnSearchToggle.addEventListener('click', () => {
-      if (!searchBar) return;
-      const isHidden = searchBar.style.display === 'none';
-      searchBar.style.display = isHidden ? 'flex' : 'none';
-      if (isHidden && searchInput) {
-        searchInput.focus();
-      } else {
-        searchQuery = '';
-        if (searchInput) searchInput.value = '';
-        if (searchClear) searchClear.style.display = 'none';
-        render();
-      }
-    });
-  }
-
-  // Search input handler
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value;
-      if (searchClear) searchClear.style.display = searchQuery ? 'block' : 'none';
-      render();
-    });
-  }
-
-  if (searchClear) {
-    searchClear.addEventListener('click', () => {
-      searchQuery = '';
-      if (searchInput) {
-        searchInput.value = '';
-        searchInput.focus();
-      }
-      searchClear.style.display = 'none';
-      render();
-    });
-  }
-
-  // Global search shortcut (Ctrl+K / Cmd+K) and Escape
+  // Global shortcuts and Escape
   window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-      if (btnSearchToggle) {
-        e.preventDefault();
-        btnSearchToggle.click();
-      }
-    } else if (e.key === 'Escape') {
-      if (searchBar && searchBar.style.display !== 'none') {
-        searchBar.style.display = 'none';
-        searchQuery = '';
-        if (searchInput) searchInput.value = '';
-        render();
+    if (e.key === 'Escape') {
+      if (tabContextMenu && tabContextMenu.style.display !== 'none') {
+        hideContextMenu();
       }
       if (logsDrawer && logsDrawer.style.display !== 'none') {
         logsDrawer.style.display = 'none';
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
+      // Diagnostic logs drawer shortcut
+      if (logsDrawer) {
+        const isHidden = logsDrawer.style.display === 'none';
+        logsDrawer.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) {
+          renderLogEntries();
+        }
       }
     }
   });
@@ -1123,17 +1058,6 @@ function setupEventListeners() {
  * Diagnostic Logs Drawer Setup
  */
 function setupDiagnosticDrawer() {
-  // Toggle Drawer
-  if (btnLogsToggle) {
-    btnLogsToggle.addEventListener('click', () => {
-      const isHidden = logsDrawer.style.display === 'none';
-      logsDrawer.style.display = isHidden ? 'flex' : 'none';
-      if (isHidden) {
-        renderLogEntries();
-      }
-    });
-  }
-
   // Close Drawer
   btnCloseLogs.addEventListener('click', () => {
     logsDrawer.style.display = 'none';

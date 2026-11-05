@@ -5,7 +5,7 @@
 :root {
   --bg-primary: #3C3C3C;
   --bg-glass: rgba(60, 60, 60, 0.86);
-  --bg-panel-rail: rgba(32, 32, 34, 0.78);
+  --bg-panel-rail: var(--bg-primary);
   --bg-card: rgba(255, 255, 255, 0.08);
   --bg-card-hover: rgba(255, 255, 255, 0.14);
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -28,7 +28,7 @@
   :root {
     --bg-primary: #f5f5f7;
     --bg-glass: rgba(255, 255, 255, 0.82);
-    --bg-panel-rail: rgba(240, 240, 243, 0.82);
+    --bg-panel-rail: var(--bg-primary);
     --bg-card: rgba(255, 255, 255, 0.9);
     --bg-card-hover: #ffffff;
     --border-subtle: rgba(0, 0, 0, 0.06);
@@ -117,136 +117,7 @@ body {
   flex-direction: column;
   height: 100vh;
   width: 100%;
-}
-
-/* ================= Header ================= */
-.sm-header {
-  padding: 12px 14px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-subtle);
-  z-index: 10;
-}
-
-.sm-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sm-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sm-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #34c759;
-  box-shadow: 0 0 8px rgba(52, 199, 89, 0.6);
-  animation: pulse-dot 2.5s infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.15); }
-}
-
-.sm-title {
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.2px;
-}
-
-.sm-tab-count {
-  font-size: 11px;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 7px;
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-}
-
-.sm-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sm-btn-icon {
   background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.sm-btn-icon:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
-}
-
-.sm-btn-icon:active {
-  transform: scale(0.92);
-}
-
-/* ================= Search Bar ================= */
-.sm-search-bar {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 5px 8px;
-  position: relative;
-  transition: border-color 0.2s;
-}
-
-.sm-search-bar:focus-within {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-
-.sm-search-icon {
-  color: var(--text-muted);
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.sm-search-bar input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-size: 12px;
-  width: 100%;
-}
-
-.sm-search-bar input::placeholder {
-  color: var(--text-muted);
-}
-
-.sm-search-clear {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0 4px;
-}
-
-.sm-search-clear:hover {
-  color: var(--text-primary);
 }
 
 /* ================= Section Labels ================= */
@@ -384,9 +255,7 @@ body {
   flex-shrink: 0;
   margin: 0;
   padding: 8px 12px 10px;
-  background: var(--bg-panel-rail);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
   z-index: 10;
@@ -1133,9 +1002,7 @@ body.is-minimap-dragging {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg-panel-rail);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: var(--bg-primary);
   border-left: 1px solid var(--border-subtle);
   position: relative;
   user-select: none;
@@ -1456,14 +1323,9 @@ body.is-minimap-dragging {
   color: var(--text-muted);
 }
 
-.sm-btn-icon.is-active {
-  background: rgba(0, 122, 255, 0.18);
-  color: var(--accent-color);
-}
-
 @media (prefers-color-scheme: light) {
   .sm-minimap {
-    background: var(--bg-panel-rail);
+    background: var(--bg-primary);
   }
   .sm-minimap-header {
     border-bottom-color: var(--border-subtle);
@@ -1512,10 +1374,8 @@ body.is-minimap-dragging {
   left: 0;
   right: 0;
   height: 250px;
-  background: rgba(14, 16, 22, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-subtle);
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;

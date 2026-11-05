@@ -82,6 +82,19 @@
     background: rgba(0, 0, 0, 0.08);
     color: #000000;
   }
+
+  .sm-card-close {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  .sm-card-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #000000;
+  }
 }
 
 * {
@@ -748,55 +761,57 @@ body {
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-muted);
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all 0.16s ease;
   line-height: 1;
 }
 
 .sm-stage-group.is-active-bar:hover .sm-active-close {
-  background: #ff5f56;
-  border-color: rgba(0, 0, 0, 0.25);
-  color: #4a0002;
-  box-shadow: 0 1px 3px rgba(255, 95, 86, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .sm-active-close:hover {
-  background: #ff3b30 !important;
+  background: rgba(255, 255, 255, 0.22) !important;
   color: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.55);
-  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(1.12);
 }
 
-/* ================= Inactive Stage Card (Neutral Forward-Facing, No Skew) ================= */
+/* ================= Inactive Stage 3D Perspective Card (macOS Stage Manager Style) ================= */
 .sm-stages-list .sm-stage-group {
+  perspective: 900px;
+  transform-style: preserve-3d;
   width: 100%;
+  margin-bottom: 8px;
 }
 
 .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: scale(0.96);
+  transform: perspective(900px) rotateY(12deg) scale(0.93);
   transform-origin: center center;
-  transition: transform 0.25s var(--spring-easing), box-shadow 0.25s ease, filter 0.22s ease;
-  filter: brightness(0.94) contrast(1.02);
+  transition: transform 0.32s var(--spring-easing), box-shadow 0.32s ease, filter 0.25s ease;
+  filter: brightness(0.92) contrast(1.02);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 4px 10px 24px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.2);
   overflow: visible;
 }
 
-/* Hover effect: Fluidly spring forward, elevate, perfect left/right margin alignment */
+/* Hover effect: Fluidly spring back straight, elevate, perfect left/right margin alignment */
 .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: scale(1.0) translateY(-2px);
+  transform: perspective(900px) rotateY(0deg) scale(1.0);
   filter: brightness(1) contrast(1);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 5;
 }
 
@@ -906,23 +921,25 @@ body {
   opacity: 1;
 }
 
-/* Close Button (×) - Mac Style Traffic Light Red */
+/* Close Button (×) - Minimalist Frosted Monochrome Style (No Red) */
 .sm-card-close {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  background: #ff5f56;
-  color: #4a0002;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
-  box-shadow: 0 1px 3px rgba(255, 95, 86, 0.35);
-  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.16s ease;
   opacity: 0;
   flex-shrink: 0;
 }
@@ -933,11 +950,11 @@ body {
 }
 
 .sm-card-close:hover {
-  background: #ff3b30;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
   color: #ffffff;
-  border-color: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.55);
-  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transform: scale(1.12);
 }
 
 .sm-card-close:active {
@@ -1050,14 +1067,14 @@ body {
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group .sm-card-wrapper {
-  transform: scale(0.96);
+  transform: perspective(900px) rotateY(-12deg) scale(0.93);
   transform-origin: center center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: -4px 10px 24px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .sm-body-wrapper.minimap-left .sm-stages-list .sm-stage-group:hover .sm-card-wrapper {
-  transform: scale(1.0) translateY(-2px);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
+  transform: perspective(900px) rotateY(0deg) scale(1.0);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.52), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .sm-body-wrapper.minimap-left .sm-minimap-popover {
